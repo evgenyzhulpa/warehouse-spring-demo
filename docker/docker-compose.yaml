@@ -1,0 +1,25 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:15-alpine  # современная версия
+    container_name: warehouse-postgres  # имя для удобства
+    env_file: .env  # берем переменные из .env
+    ports:
+      - "5432:5432"  # пробрасываем порт
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      # Volume для сохранения данных БД
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:  # проверка готовности БД
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s  # проверять каждые 10 сек
+      timeout: 5s    # ждать ответ 5 сек
+      retries: 5     # 5 попыток
+    restart: unless-stopped  # перезапуск при падении
+
+# Объявляем volume для хранения данных
+volumes:
+  postgres_data:
