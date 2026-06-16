@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260611-0001" author="EvgenyZhulpa">
+        <comment>Creating the table role_permissions</comment>
+        <createTable tableName="role_permissions">
+            <column name="role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="role_permissions" columnNames="role_id, permission_id"/>
+
+        <!-- Creating a record with the role "Полные права" and permission "FULL_ACCESS" ("Полный доступ") -->
+        <insert tableName="role_permissions">
+            <column name="role_id" value="1"/>
+            <column name="permission_id" value="1"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260611-0001" author="EvgenyZhulpa">
+        <comment>Creating the table permissions with basic fields (BaseEntity, SystemEntity)</comment>
+        <createTable tableName="permissions">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="system_defined" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="permissions" indexName="idx_permissions_deleted">
+            <column name="deleted"/>
+        </createIndex>
+
+        <createIndex tableName="permissions" indexName="idx_permissions_code">
+            <column name="code"/>
+        </createIndex>
+
+        <createIndex tableName="permissions" indexName="idx_permissions_name">
+            <column name="name"/>
+        </createIndex>
+
+        <insert tableName="permissions">
+            <column name="code" value="FULL_ACCESS"/>
+            <column name="name" value="Полный доступ"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="code" value="UNITS_READ"/>
+            <column name="name" value="Просмотр (чтение) единиц измерения"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="code" value="UNITS_WRITE"/>
+            <column name="name" value="Добавление и изменение единиц измерения"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="code" value="USERS_READ"/>
+            <column name="name" value="Просмотр (чтение) пользователей"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="code" value="USERS_WRITE"/>
+            <column name="name" value="Добавление и изменение пользователей"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="code" value="ROLES_READ"/>
+            <column name="name" value="Просмотр (чтение) ролей"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+
+        <insert tableName="permissions">
+            <column name="code" value="ROLES_WRITE"/>
+            <column name="name" value="Добавление и изменение ролей"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

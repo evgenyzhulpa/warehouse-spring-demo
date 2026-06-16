@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: WarehouseDemo
+  security:
+    user:
+      name: admin
+      password: admin
+  datasource:
+    url: jdbc:postgresql://localhost:5432/app_db
+    username: admin
+    password: girmo$45
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 10000
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        ddl-auto: none
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+          order_inserts: true
+          order_updates: true
+
+  liquibase:
+      enabled: true
+      change-log: classpath:db/changelog/db.changelog-master.xml
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.warehouse: DEBUG
+    org.springframework.web: DEBUG

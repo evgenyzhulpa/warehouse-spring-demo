@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+<changeSet id="20260127-0001" author="EvgenyZhulpa">
+        <comment>Creating the table units with basic fields (BaseEntity)</comment>
+        <createTable tableName="units">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="TEXT"/>
+        </createTable>
+        
+        <createIndex tableName="units" indexName="idx_units_deleted">
+            <column name="deleted"/>
+        </createIndex>
+        <createIndex tableName="units" indexName="idx_units_name">
+            <column name="name"/>
+        </createIndex>
+        <createIndex tableName="units" indexName="idx_units_code">
+            <column name="code"/>
+        </createIndex>
+
+        <insert tableName="units">
+            <column name="name" value="шт."/>
+            <column name="code" value="PCE"/>
+            <column name="description" value="Штука"/>
+        </insert>
+        <insert tableName="units">
+            <column name="name" value="кор."/>
+            <column name="code" value="BOX"/>
+            <column name="description" value="Коробка"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
