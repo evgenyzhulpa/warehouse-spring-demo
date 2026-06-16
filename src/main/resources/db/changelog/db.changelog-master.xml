@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <include file="classpath:schema.sql"/>
+    <include file="v1.0/2026/01/20260127-0001-base-entity.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.02/20260211-0001-fix-duplicate-indexes.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.06/20260611-0001-permissions.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.06/20260611-0001-roles.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.06/20260611-0001-role_permissions.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.06/20260611-0001-users.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.06/20260611-0001-user_roles.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.06/20260616-0001-role_permissions.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>
