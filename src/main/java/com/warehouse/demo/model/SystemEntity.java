@@ -13,5 +13,5 @@ import lombok.*;
 public abstract class SystemEntity extends BaseEntity {
 
     @Column(name = "system_defined", nullable = false)
-    private Boolean systemDefined;
+    private Boolean systemDefined = false;
 }

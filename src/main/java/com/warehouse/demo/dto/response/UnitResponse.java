@@ -5,5 +5,6 @@ public record UnitResponse(
         String name,
         String code,
         String description,
-        Boolean deleted
+        Boolean deleted,
+        Boolean systemDefined
 ) {}
