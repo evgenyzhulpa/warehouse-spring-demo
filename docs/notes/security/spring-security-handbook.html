@@ -1,0 +1,1817 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Учебник по Spring Security: Архитектура, JWT, Refresh, OAuth 2.0 и OpenID Connect</title>
+<style>
+@page {
+    size: A4;
+    margin: 18mm 15mm 20mm 15mm;
+    @bottom-right {
+        content: counter(page);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 8pt;
+        color: #64748b;
+    }
+}
+:root {
+    --primary: #0f3d68;
+    --primary-light: #eef6fc;
+    --secondary: #0284c7;
+    --accent: #059669;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --dark: #0f172a;
+    --text: #1e293b;
+    --text-muted: #475569;
+    --border: #cbd5e1;
+    --bg-code: #0b1320;
+    --bg-light: #f8fafc;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    color: var(--text);
+    font-size: 10pt;
+    background: #fff;
+}
+h1, h2, h3, h4, h5 {
+    color: var(--primary);
+    font-weight: 700;
+    page-break-after: avoid;
+}
+h1 { font-size: 26pt; line-height: 1.15; margin: 0 0 4mm 0; }
+h2 { font-size: 16pt; border-bottom: 2px solid var(--secondary); padding-bottom: 1.5mm; margin: 10mm 0 4mm 0; page-break-before: auto; }
+h3 { font-size: 12.5pt; margin: 6mm 0 2.5mm 0; color: #1e40af; }
+h4 { font-size: 10.5pt; margin: 4mm 0 2mm 0; color: #334155; }
+p, li { orphans: 3; widows: 3; }
+p { margin: 0 0 2.5mm 0; text-align: justify; }
+ul, ol { margin: 0 0 3mm 0; padding-left: 5mm; }
+li { margin-bottom: 1mm; }
+
+/* Обложка */
+.cover-page {
+    min-height: 240mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    page-break-after: always;
+    padding: 10mm 0;
+}
+.cover-badge {
+    display: inline-block;
+    padding: 2mm 5mm;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    margin-bottom: 6mm;
+}
+.cover-title {
+    font-size: 28pt;
+    color: var(--primary);
+    line-height: 1.2;
+    margin-bottom: 4mm;
+}
+.cover-subtitle {
+    font-size: 13pt;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 8mm;
+}
+.cover-meta {
+    background: var(--bg-light);
+    border-left: 4px solid var(--secondary);
+    padding: 4mm 5mm;
+    border-radius: 0 6px 6px 0;
+    font-size: 9pt;
+    color: #334155;
+}
+.cover-meta p { margin: 1mm 0; }
+.cover-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 4mm;
+    font-size: 8.5pt;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Оглавление */
+.toc-container {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5mm;
+    margin: 4mm 0 8mm 0;
+    page-break-after: always;
+}
+.toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm 6mm;
+}
+.toc-item {
+    font-size: 9pt;
+    line-height: 1.35;
+}
+.toc-item a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+.toc-item a:hover { text-decoration: underline; }
+
+/* Код и листинги */
+code {
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 8.5pt;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 0.5mm 1.5mm;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+}
+pre {
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 8pt;
+    line-height: 1.4;
+    background: var(--bg-code);
+    color: #f8fafc;
+    padding: 3.5mm 4mm;
+    border-radius: 6px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 2.5mm 0 4mm 0;
+    page-break-inside: avoid;
+    border: 1px solid #1e293b;
+}
+pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    font-size: inherit;
+}
+.code-keyword { color: #f472b6; font-weight: bold; }
+.code-type { color: #38bdf8; }
+.code-string { color: #a3e635; }
+.code-comment { color: #94a3b8; font-style: italic; }
+.code-annotation { color: #fbbf24; }
+.code-method { color: #60a5fa; }
+
+/* Таблицы */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0 5mm 0;
+    font-size: 8.8pt;
+    page-break-inside: avoid;
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 2mm 2.5mm;
+    text-align: left;
+    vertical-align: top;
+}
+th {
+    background: #f1f5f9;
+    color: var(--primary);
+    font-weight: 700;
+}
+tr:nth-child(even) td { background: #fafafa; }
+
+/* Информационные плашки */
+.callout {
+    padding: 3mm 4mm;
+    margin: 3mm 0 4mm 0;
+    border-left: 4px solid var(--secondary);
+    background: var(--primary-light);
+    border-radius: 0 4px 4px 0;
+    page-break-inside: avoid;
+    font-size: 9pt;
+}
+.callout p:last-child { margin-bottom: 0; }
+.callout-title {
+    font-weight: 700;
+    margin-bottom: 1mm;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+}
+.callout.warn {
+    border-left-color: var(--warn);
+    background: #fffbeb;
+    color: #78350f;
+}
+.callout.warn .callout-title { color: #b45309; }
+.callout.danger {
+    border-left-color: var(--danger);
+    background: #fef2f2;
+    color: #7f1d1d;
+}
+.callout.danger .callout-title { color: #b91c1c; }
+.callout.success {
+    border-left-color: var(--accent);
+    background: #ecfdf5;
+    color: #064e3b;
+}
+.callout.success .callout-title { color: #047857; }
+
+/* Схемы и диаграммы (SVG контейнеры) */
+.diagram-box {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 3mm;
+    margin: 3mm 0 5mm 0;
+    page-break-inside: avoid;
+    text-align: center;
+}
+.diagram-caption {
+    font-size: 8.5pt;
+    color: var(--text-muted);
+    margin-top: 1.5mm;
+    font-weight: 600;
+}
+.page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- ОБЛОЖКА -->
+<div class="cover-page">
+    <div>
+        <div class="cover-badge">Архитектурный и практический учебник</div>
+        <h1 class="cover-title">Spring Security 6.x:<br>От фильтров сервлета до JWT, Refresh и OAuth 2.0 / OIDC</h1>
+        <div class="cover-subtitle">
+            Глубокое академическое и прикладное руководство по проектированию систем аутентификации и авторизации в современных Java/Spring приложениях.
+        </div>
+        <div class="cover-meta">
+            <p><strong>Целевая аудитория:</strong> Разработчики Java / Spring Boot, инженеры корпоративных систем, архитекторы.</p>
+            <p><strong>Технологический стек:</strong> Java 17/21, Spring Boot 3.x, Spring Security 6.x, JJWT 0.12+, OAuth 2.1, OpenID Connect 1.0, RFC 7519 / 6749 / 7636.</p>
+            <p><strong>Формат материала:</strong> Теория угроз → Архитектура компонентов → Цветные блок-схемы потока вызовов → Пошаговое внедрение → Построчный разбор кода → Реальные enterprise-паттерны.</p>
+        </div>
+    </div>
+    <div class="cover-footer">
+        <span>Spring Security Comprehensive Guide</span>
+        <span>2026 Edition</span>
+    </div>
+</div>
+
+<!-- ОГЛАВЛЕНИЕ -->
+<h2>Содержание учебника</h2>
+<div class="toc-container">
+    <div class="toc-grid">
+        <div class="toc-item"><a href="#ch1">1. Фундамент безопасности веб-приложений и модель угроз</a></div>
+        <div class="toc-item"><a href="#ch7">7. Архитектура и реализация JWT (JSON Web Tokens)</a></div>
+        <div class="toc-item"><a href="#ch2">2. Понятийный аппарат Spring Security</a></div>
+        <div class="toc-item"><a href="#ch8">8. Двухтокеновая схема: JWT Access + Refresh Token</a></div>
+        <div class="toc-item"><a href="#ch3">3. Архитектура под капотом: от сокета до контроллера</a></div>
+        <div class="toc-item"><a href="#ch9">9. Протокол OAuth 2.0: Делегирование авторизации</a></div>
+        <div class="toc-item"><a href="#ch4">4. Факторы и методы аутентификации (2FA, TOTP, FIDO2)</a></div>
+        <div class="toc-item"><a href="#ch10">10. OpenID Connect (OIDC): Слой идентификации</a></div>
+        <div class="toc-item"><a href="#ch5">5. Базовая настройка Spring Security с нуля</a></div>
+        <div class="toc-item"><a href="#ch11">11. Внедрение OAuth 2.0 / OIDC в Spring Boot</a></div>
+        <div class="toc-item"><a href="#ch6">6. HTTP Basic Authentication: протокол и код</a></div>
+        <div class="toc-item"><a href="#ch12">12. Приложение: Промышленная архитектура безопасности</a></div>
+        <div class="toc-item" style="grid-column: span 2; margin-top: 1mm;"><a href="#ch13">13. Руководство по работе с официальной документацией Spring и техническим английским (A2+/B1)</a></div>
+    </div>
+</div>
+
+<!-- ГЛАВА 1 -->
+<h2 id="ch1">Глава 1. Фундамент безопасности веб-приложений и модель угроз</h2>
+<p>
+Любое веб-приложение функционирует в принципиально враждебной среде. Каждый байт, поступающий по сети через сетевой сокет от внешнего клиента (веб-браузера, мобильного приложения, curl-запроса или автоматизированного скрипта), должен считаться потенциально скомпрометированным. Безопасность не может обеспечиваться «сокрытием» кнопок на клиенте или проверками на уровне пользовательского интерфейса (UI). Единственным достоверным рубежом обороны является серверное приложение.
+</p>
+
+<h3>1.1. Триада информационной безопасности (CIA Triad)</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Компонент</th>
+            <th>Определение</th>
+            <th>Угроза нарушения</th>
+            <th>Механизм защиты в Spring Security</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Confidentiality</strong> (Конфиденциальность)</td>
+            <td>Доступ к информации разрешен исключительно авторизованным субъектам.</td>
+            <td>Утечка паролей, чтение чужих персональных данных или финансовых записей.</td>
+            <td>Шифрование каналов связи (TLS), хеширование паролей (BCrypt/Argon2), ролевой доступ (RBAC, <code>@PreAuthorize</code>).</td>
+        </tr>
+        <tr>
+            <td><strong>Integrity</strong> (Целостность)</td>
+            <td>Гарантия неизменности и достоверности данных в процессе передачи и хранения.</td>
+            <td>Подделка суммы платежа, несанкционированное изменение ролей пользователя.</td>
+            <td>Криптографические цифровые подписи (HMAC, RSA в JWT), CSRF-защита, транзакционная валидация.</td>
+        </tr>
+        <tr>
+            <td><strong>Availability</strong> (Доступность)</td>
+            <td>Своевременный и беспрепятственный доступ легитимных пользователей к сервису.</td>
+            <td>DDoS-атаки, блокировка учетных записей исчерпанием пула соединений.</td>
+            <td>Ограничение частоты запросов (Rate Limiting), эффективное кэширование, защита от блокировки потоков сервлета.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>1.2. Анализ ключевых веб-угроз (OWASP Top 10)</h3>
+<ul>
+    <li><strong>Broken Access Control (Нарушение контроля доступа):</strong> Ситуация, когда пользователь с ролью обычного оператора обращается к URL <code>DELETE /api/v1/users/42</code>. Если проверка прав отсутствует или выполнена только на клиенте, операция выполнится. В Spring Security защита реализуется через декларативный контроль URL (<code>authorizeHttpRequests</code>) и метод-секьюрити (AOP-прокси на сервисах).</li>
+    <li><strong>Cryptographic Failures (Сбои криптографии):</strong> Хранение паролей в открытом виде или использование устаревших алгоритмов (MD5, SHA-1). Spring Security принудительно требует реализации интерфейса <code>PasswordEncoder</code>, исключающего хранение открытого текста.</li>
+    <li><strong>Cross-Site Scripting (XSS):</strong> Внедрение вредоносного JavaScript в страницу жертвы. XSS позволяет украсть токены из <code>localStorage</code>. Защита: экранирование вывода, политика Content Security Policy (CSP) и использование флага <code>HttpOnly</code> для cookie.</li>
+    <li><strong>Cross-Site Request Forgery (CSRF):</strong> Атака, при которой сторонний сайт отправляет скрытый запрос на защищенный ресурс от имени авторизованного пользователя, используя автоматически прикрепляемые браузером cookie сессии (<code>JSESSIONID</code>). Spring Security по умолчанию активирует <code>CsrfFilter</code> с генерацией уникального токена синхронизации (Synchronizer Token Pattern).</li>
+    <li><strong>Session Hijacking & Replay Attacks:</strong> Перехват идентификатора сессии или токена доступа. Защита: принудительный HTTPS (HSTS), короткое время жизни токенов доступа (Access Token TTL), ротация Refresh-токенов.</li>
+</ul>
+
+<h3>1.3. Базовые защитные протоколы и заголовки</h3>
+<ul>
+    <li><strong>TLS / HTTPS (Transport Layer Security):</strong> Протокол криптографической защиты транспортного уровня. Шифрует весь HTTP-пакет (URL пути, заголовки, тело запроса, cookie). Без HTTPS передача паролей (в том числе Basic Auth) и токенов (Bearer JWT) категорически недопустима.</li>
+    <li><strong>HSTS (HTTP Strict Transport Security):</strong> Заголовок <code>Strict-Transport-Security: max-age=31536000; includeSubDomains</code>, принуждающий браузер выполнять все последующие запросы исключительно по HTTPS, предотвращая атаки SSL-Strip.</li>
+    <li><strong>CORS (Cross-Origin Resource Sharing):</strong> Механизм браузера, регулирующий доступ скриптов с одного домена (Origin: <code>https://frontend.com</code>) к ресурсам другого домена (<code>https://api.backend.com</code>). Включает preflight-запросы <code>OPTIONS</code>. Настраивается на сервере через <code>CorsConfigurationSource</code>.</li>
+</ul>
+
+<!-- ГЛАВА 2 -->
+<h2 id="ch2">Глава 2. Понятийный аппарат Spring Security</h2>
+<p>
+Spring Security построен на строгом разделении обязанностей между интерфейсами. Чтобы уверенно ориентироваться в коде фреймворка, необходимо четко различать фундаментальные абстракции.
+</p>
+
+<div class="diagram-box">
+    <svg width="100%" height="220" viewBox="0 0 750 220" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="10" width="220" height="200" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="120" y="35" text-anchor="middle" font-family="Segoe UI" font-size="12" font-weight="bold" fill="#0f3d68">SecurityContextHolder</text>
+        <rect x="25" y="50" width="190" height="145" rx="6" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="120" y="75" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#0369a1">SecurityContext</text>
+        <rect x="40" y="95" width="160" height="85" rx="4" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="120" y="118" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#0284c7">Authentication</text>
+        <text x="50" y="140" font-family="Segoe UI" font-size="9" fill="#334155">• Principal (Кто?)</text>
+        <text x="50" y="155" font-family="Segoe UI" font-size="9" fill="#334155">• Credentials (Пароль/Секрет)</text>
+        <text x="50" y="170" font-family="Segoe UI" font-size="9" fill="#334155">• Authorities (Права)</text>
+
+        <!-- Стрелки и связи -->
+        <path d="M 230 140 L 290 140" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+            </marker>
+        </defs>
+
+        <rect x="295" y="30" width="200" height="80" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1.5"/>
+        <text x="395" y="55" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#166534">AuthenticationManager</text>
+        <text x="395" y="75" text-anchor="middle" font-family="Segoe UI" font-size="9" fill="#15803d">authenticate(Authentication)</text>
+        <text x="395" y="92" text-anchor="middle" font-family="Segoe UI" font-size="8.5" fill="#475569">Главный координатор проверки</text>
+
+        <path d="M 395 110 L 395 135" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+
+        <rect x="295" y="140" width="200" height="70" rx="6" fill="#fefce8" stroke="#facc15" stroke-width="1.5"/>
+        <text x="395" y="163" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#854d0e">AuthenticationProvider</text>
+        <text x="395" y="183" text-anchor="middle" font-family="Segoe UI" font-size="8.5" fill="#713f12">DaoAuthenticationProvider</text>
+        <text x="395" y="197" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">Сверяет пароль и загружает роли</text>
+
+        <path d="M 495 160 L 545 120" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+        <path d="M 495 185 L 545 185" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+
+        <rect x="550" y="90" width="190" height="55" rx="6" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5"/>
+        <text x="645" y="112" text-anchor="middle" font-family="Segoe UI" font-size="10.5" font-weight="bold" fill="#6b21a8">UserDetailsService</text>
+        <text x="645" y="130" text-anchor="middle" font-family="Segoe UI" font-size="8.5" fill="#7e22ce">loadUserByUsername()</text>
+
+        <rect x="550" y="160" width="190" height="55" rx="6" fill="#fff1f2" stroke="#fda4af" stroke-width="1.5"/>
+        <text x="645" y="182" text-anchor="middle" font-family="Segoe UI" font-size="10.5" font-weight="bold" fill="#9f1239">PasswordEncoder</text>
+        <text x="645" y="200" text-anchor="middle" font-family="Segoe UI" font-size="8.5" fill="#be123c">matches(raw, encoded)</text>
+    </svg>
+    <div class="diagram-caption">Рис. 2.1. Иерархия ключевых компонентов и хранилища контекста безопасности</div>
+</div>
+
+<h3>2.1. Основные сущности и их назначение</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Интерфейс / Класс</th>
+            <th>Смысл и ответственность</th>
+            <th>Методы и свойства</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>SecurityContextHolder</code></td>
+            <td>Статический фасад (точка доступа) к текущему контексту безопасности. По умолчанию использует стратегию <code>ThreadLocal</code> (один контекст на поток выполнения HTTP-запроса).</td>
+            <td><code>getContext()</code>, <code>setContext(context)</code>, <code>clearContext()</code>.</td>
+        </tr>
+        <tr>
+            <td><code>SecurityContext</code></td>
+            <td>Контейнер, связывающий текущий поток выполнения с объектом <code>Authentication</code>.</td>
+            <td><code>getAuthentication()</code>, <code>setAuthentication(auth)</code>.</td>
+        </tr>
+        <tr>
+            <td><code>Authentication</code></td>
+            <td>Двуликий объект: до аутентификации содержит сырые реквизиты (логин/пароль), после — подтвержденного пользователя с правами.</td>
+            <td><code>getPrincipal()</code>, <code>getCredentials()</code>, <code>getAuthorities()</code>, <code>isAuthenticated()</code>.</td>
+        </tr>
+        <tr>
+            <td><code>Principal</code></td>
+            <td>Объект, идентифицирующий личность. Обычно это экземпляр <code>UserDetails</code> или кастомный класс домена.</td>
+            <td>В простейшем случае — строка (username), в продвинутом — объект доменной сущности.</td>
+        </tr>
+        <tr>
+            <td><code>GrantedAuthority</code></td>
+            <td>Неделимое право (полномочие), выданное пользователю (например, <code>READ_PRIVILEGE</code> или <code>ROLE_ADMIN</code>).</td>
+            <td><code>String getAuthority()</code>.</td>
+        </tr>
+        <tr>
+            <td><code>UserDetails</code></td>
+            <td>Адаптер между доменной моделью вашей базы данных (таблица <code>users</code>) и требованиями Spring Security.</td>
+            <td><code>getUsername()</code>, <code>getPassword()</code>, <code>getAuthorities()</code>, флаги <code>isAccountNonExpired()</code>, <code>isEnabled()</code>.</td>
+        </tr>
+        <tr>
+            <td><code>UserDetailsService</code></td>
+            <td>Единственная обязанность — по строковому имени (логину/email) загрузить <code>UserDetails</code> из источника данных (БД, LDAP, API).</td>
+            <td><code>UserDetails loadUserByUsername(String username)</code>.</td>
+        </tr>
+        <tr>
+            <td><code>PasswordEncoder</code></td>
+            <td>Криптографический компонент для одностороннего хеширования и безопасного сравнения паролей с солью (salt).</td>
+            <td><code>String encode(CharSequence rawPassword)</code>, <code>boolean matches(raw, encoded)</code>.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>2.2. Разница между Role и Authority</h3>
+<p>
+В Spring Security оба понятия представляются через интерфейс <code>GrantedAuthority</code>, однако имеют разную семантику:
+</p>
+<ul>
+    <li><strong>Authority (Полномочие / Право):</strong> Гранулярное действие над объектом системы. Примеры: <code>PRODUCT_CREATE</code>, <code>USER_DELETE</code>, <code>REPORT_EXPORT</code>. Проверяется выражением <code>hasAuthority('PRODUCT_CREATE')</code>.</li>
+    <li><strong>Role (Роль):</strong> Агрегат прав, бизнес-статус субъекта. Примеры: <code>ADMIN</code>, <code>MANAGER</code>. Spring Security по умолчанию требует, чтобы строковое представление роли начиналось с префикса <code>ROLE_</code> (например, <code>ROLE_ADMIN</code>). Метод <code>hasRole('ADMIN')</code> автоматически подставляет префикс и ищет authority с именем <code>ROLE_ADMIN</code>.</li>
+</ul>
+
+<h3>2.3. Глубокое погружение: Диспетчеризация и цепочка проверки подлинности</h3>
+<p>
+Вся архитектура аутентификации в Spring Security построена по классическому поведенческому паттерну <strong>«Цепочка обязанностей» (Chain of Responsibility)</strong> в сочетании с <strong>«Медиатором / Диспетчером»</strong>.
+</p>
+
+<h4>1. AuthenticationManager — Директор бюро пропусков</h4>
+<p>
+Интерфейс <code>AuthenticationManager</code> не занимается непосредственной проверкой паролей, обращением к базе данных или парсингом токенов. Его зона ответственности — <strong>оркестрация и координация</strong>. Он получает на вход неаутентифицированный объект <code>Authentication</code> (например, <code>UsernamePasswordAuthenticationToken</code> с логином и паролем) и опрашивает зарегистрированных провайдеров.
+</p>
+
+<pre><code><span class="code-keyword">package</span> org.springframework.security.authentication;
+
+<span class="code-keyword">public interface</span> <span class="code-type">AuthenticationManager</span> {
+    <span class="code-type">Authentication</span> <span class="code-method">authenticate</span>(<span class="code-type">Authentication</span> authentication) <span class="code-keyword">throws</span> <span class="code-type">AuthenticationException</span>;
+}</code></pre>
+
+<h4>2. ProviderManager — Стандартная реализация менеджера</h4>
+<p>
+Основной реализацией <code>AuthenticationManager</code> по умолчанию является класс <code>ProviderManager</code>. Внутри него хранится список провайдеров <code>List&lt;AuthenticationProvider&gt;</code>. При вызове <code>authenticate()</code> он выполняет следующий алгоритм:
+</p>
+<ol>
+    <li>В цикле опрашивает каждый <code>AuthenticationProvider</code> через метод <code>provider.supports(authentication.getClass())</code>.</li>
+    <li>Если провайдер возвращает <code>true</code> (сообщает: <em>«Да, я умею проверять данный тип учетных данных»</em>), управление передается его методу <code>provider.authenticate(authentication)</code>.</li>
+    <li>Если аутентификация успешна, возвращается полностью заполненный объект <code>Authentication</code> (со свойством <code>isAuthenticated() == true</code>, заполненным <code>Principal</code> и правами <code>Authorities</code>, а пароль <code>Credentials</code> затирается).</li>
+    <li>Если провайдер выбросил <code>AuthenticationException</code> (например, <code>BadCredentialsException</code>), процесс прерывается, и ошибка пробрасывается наверх.</li>
+</ol>
+
+<h4>3. Виды AuthenticationProvider</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Провайдер</th>
+            <th>Специализация</th>
+            <th>Источник валидации</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>DaoAuthenticationProvider</code></td>
+            <td>Классический вход по логину/паролю из БД.</td>
+            <td>Использует связку <code>UserDetailsService</code> (поиск в БД) + <code>PasswordEncoder</code> (сверка хэша).</td>
+        </tr>
+        <tr>
+            <td><code>LdapAuthenticationProvider</code></td>
+            <td>Корпоративная учетная запись Active Directory / LDAP.</td>
+            <td>LDAP-сервер предприятия.</td>
+        </tr>
+        <tr>
+            <td><code>JwtAuthenticationProvider</code></td>
+            <td>Проверка цифровой подписи и claims токена JWT.</td>
+            <td>Публичный ключ или HMAC-секрет.</td>
+        </tr>
+        <tr>
+            <td><code>AnonymousAuthenticationProvider</code></td>
+            <td>Присваивает анонимный контекст неавторизованным гостям.</td>
+            <td>Константа <code>ROLE_ANONYMOUS</code>.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>4. Анатомия работы DaoAuthenticationProvider под капотом</h4>
+<p>
+Когда пользователь отправляет запрос на вход (например, <code>POST /login/auth</code>), <code>DaoAuthenticationProvider</code> выполняет 5 строгих шагов:
+</p>
+<ol>
+    <li><strong>Запрос к архиву:</strong> Вызывает <code>userDetailsService.loadUserByUsername(username)</code>. Сервис обращается через JPA к базе данных и возвращает объект <code>UserDetails</code> (в нашем проекте это <code>AppPrincipal</code>). Если пользователь не найден — выбрасывается <code>UsernameNotFoundException</code>.</li>
+    <li><strong>Проверка статусов учетной записи:</strong> Провайдер вызывает методы <code>isAccountNonLocked()</code>, <code>isEnabled()</code>, <code>isAccountNonExpired()</code>. Если хотя бы один флаг равен <code>false</code>, выбрасывается специфическое исключение (например, <code>DisabledException</code> или <code>LockedException</code>).</li>
+    <li><strong>Проверка пароля:</strong> Провайдер берет сырой пароль, присланный клиентом, и хэш из <code>UserDetails.getPassword()</code>, после чего вызывает <code>passwordEncoder.matches(rawPassword, encodedPassword)</code>. Если хэши не совпали — выбрасывается <code>BadCredentialsException</code>.</li>
+    <li><strong>Очистка учетных данных (Credentials Erasing):</strong> В целях безопасности пароль удаляется из оперативной памяти, чтобы он случайно не утек в логи или дампы кучи (Heap Dump).</li>
+    <li><strong>Создание подтвержденного токена:</strong> Создается новый экземпляр <code>UsernamePasswordAuthenticationToken</code>, содержащий <code>Principal</code> (объект <code>AppPrincipal</code>), <code>Credentials = null</code> и коллекцию подтвержденных прав <code>Authorities</code>.</li>
+</ol>
+
+<div class="diagram-box">
+    <svg width="100%" height="280" viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="100" width="120" height="70" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+        <text x="70" y="128" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">HTTP Запрос</text>
+        <text x="70" y="145" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#64748b">POST /login/auth</text>
+        <text x="70" y="158" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">{username, pass}</text>
+
+        <path d="M 130 135 L 165 135" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="170" y="70" width="150" height="130" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="245" y="95" text-anchor="middle" font-family="Segoe UI" font-size="10.5" font-weight="bold" fill="#0369a1">AuthController</text>
+        <text x="180" y="120" font-family="Segoe UI" font-size="8" fill="#334155">1. authReq = new</text>
+        <text x="180" y="133" font-family="Segoe UI" font-size="7.5" fill="#0f3d68">UsernamePasswordToken</text>
+        <text x="180" y="146" font-family="Segoe UI" font-size="7.5" fill="#64748b">(isAuthenticated=false)</text>
+        <text x="180" y="165" font-family="Segoe UI" font-size="8" fill="#334155">2. authManager</text>
+        <text x="180" y="178" font-family="Segoe UI" font-size="8" fill="#334155">   .authenticate(authReq)</text>
+
+        <path d="M 320 135 L 355 135" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- ProviderManager / AuthenticationManager -->
+        <rect x="360" y="40" width="170" height="190" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="445" y="65" text-anchor="middle" font-family="Segoe UI" font-size="10.5" font-weight="bold" fill="#166534">AuthenticationManager</text>
+        <text x="445" y="80" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">(ProviderManager)</text>
+        
+        <rect x="370" y="95" width="150" height="120" rx="4" fill="#ffffff" stroke="#86efac" stroke-width="1.2"/>
+        <text x="445" y="115" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#15803d">DaoAuthenticationProvider</text>
+        <text x="378" y="135" font-family="Segoe UI" font-size="7.5" fill="#334155">• supports(Token.class)?</text>
+        <text x="378" y="150" font-family="Segoe UI" font-size="7.5" fill="#334155">• loadUserByUsername()</text>
+        <text x="378" y="165" font-family="Segoe UI" font-size="7.5" fill="#334155">• checkAccountStatus()</text>
+        <text x="378" y="180" font-family="Segoe UI" font-size="7.5" fill="#334155">• passwordEncoder.matches()</text>
+        <text x="378" y="198" font-family="Segoe UI" font-size="7.5" font-weight="bold" fill="#15803d">• return Auth(Principal, Authz)</text>
+
+        <!-- БД и PasswordEncoder -->
+        <path d="M 520 125 L 565 85" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="570" y="55" width="180" height="65" rx="5" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5"/>
+        <text x="660" y="75" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#6b21a8">UserDetailsService</text>
+        <text x="660" y="90" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">UserDetailsServiceImpl -&gt; DB</text>
+        <text x="660" y="105" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#7e22ce">Возврат AppPrincipal (UserEntity)</text>
+
+        <path d="M 520 175 L 565 205" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="570" y="180" width="180" height="65" rx="5" fill="#fff1f2" stroke="#fda4af" stroke-width="1.5"/>
+        <text x="660" y="202" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#9f1239">PasswordEncoder</text>
+        <text x="660" y="217" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">BCryptPasswordEncoder</text>
+        <text x="660" y="232" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#be123c">matches(rawPassword, hash)</text>
+    </svg>
+    <div class="diagram-caption">Рис. 2.2. Сквозная цепочка вызовов при обработке логина через AuthenticationManager и DaoAuthenticationProvider</div>
+</div>
+
+<!-- ГЛАВА 3 -->
+<div class="page-break"></div>
+<h2 id="ch3">Глава 3. Архитектура под капотом: от сокета до контроллера</h2>
+<p>
+Для глубокого понимания Spring Security необходимо проследить точный путь входящего байтового потока от сетевого сокета операционной системы до вызова бизнес-логики в Spring-бине.
+</p>
+
+<div class="diagram-box">
+    <svg width="100%" height="480" viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg">
+        <!-- Слой Сервлет-контейнера -->
+        <rect x="10" y="10" width="740" height="110" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="25" y="30" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#334155">УРОВЕНЬ 1: Сервлет-контейнер (Embedded Tomcat / Jetty)</text>
+        
+        <rect x="25" y="45" width="130" height="60" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="90" y="70" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">TCP Socket</text>
+        <text x="90" y="88" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#64748b">Port 8080 / TLS</text>
+
+        <path d="M 155 75 L 185 75" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="190" y="45" width="170" height="60" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="275" y="68" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">Standard FilterChain</text>
+        <text x="275" y="85" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#64748b">Logging, CORS, GZIP</text>
+
+        <path d="M 360 75 L 390 75" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="395" y="45" width="340" height="60" rx="5" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="565" y="68" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0369a1">DelegatingFilterProxy</text>
+        <text x="565" y="85" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">Мост между Servlet Context и Spring ApplicationContext (бин "springSecurityFilterChain")</text>
+
+        <!-- Слой Spring Security FilterChain -->
+        <path d="M 565 105 L 565 140" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="10" y="145" width="740" height="155" rx="8" fill="#f8fafc" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="25" y="165" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#1d4ed8">УРОВЕНЬ 2: Цепочка фильтров безопасности (FilterChainProxy & SecurityFilterChain)</text>
+
+        <!-- Фильтры внутри SecurityFilterChain -->
+        <g transform="translate(25, 175)">
+            <rect x="0" y="0" width="130" height="95" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+            <text x="65" y="20" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#0f3d68">1. Context Holder</text>
+            <text x="65" y="35" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">SecurityContextHolderFilter</text>
+            <text x="65" y="55" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">Инициализирует пустой</text>
+            <text x="65" y="67" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">или сохраненный context</text>
+            <text x="65" y="82" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">в ThreadLocal</text>
+        </g>
+
+        <path d="M 160 220 L 175 220" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <g transform="translate(180, 175)">
+            <rect x="0" y="0" width="125" height="95" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+            <text x="62" y="20" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#0f3d68">2. CSRF Filter</text>
+            <text x="62" y="35" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">CsrfFilter</text>
+            <text x="62" y="55" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">Сверяет токен в</text>
+            <text x="62" y="67" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">POST/PUT/DELETE</text>
+            <text x="62" y="82" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">(если не STATELESS)</text>
+        </g>
+
+        <path d="M 310 220 L 325 220" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <g transform="translate(330, 175)">
+            <rect x="0" y="0" width="135" height="95" rx="4" fill="#fefce8" stroke="#eab308" stroke-width="1.5"/>
+            <text x="67" y="20" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#854d0e">3. Auth Filter</text>
+            <text x="67" y="35" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#713f12">JWT / Basic / Form</text>
+            <text x="67" y="55" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#a16207">Парсит реквизиты,</text>
+            <text x="67" y="67" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#a16207">валидирует токен,</text>
+            <text x="67" y="82" text-anchor="middle" font-family="Segoe UI" font-size="7" font-weight="bold" fill="#a16207">наполняет Context!</text>
+        </g>
+
+        <path d="M 470 220 L 485 220" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <g transform="translate(490, 175)">
+            <rect x="0" y="0" width="115" height="95" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+            <text x="57" y="20" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#0f3d68">4. Exception Filter</text>
+            <text x="57" y="35" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">ExceptionTranslation</text>
+            <text x="57" y="55" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">Ловит AccessDenied</text>
+            <text x="57" y="67" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">и AuthException -> </text>
+            <text x="57" y="82" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">HTTP 401 / 403</text>
+        </g>
+
+        <path d="M 610 220 L 625 220" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <g transform="translate(630, 175)">
+            <rect x="0" y="0" width="110" height="95" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+            <text x="55" y="20" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#0f3d68">5. Authz Filter</text>
+            <text x="55" y="35" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">AuthorizationFilter</text>
+            <text x="55" y="55" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">Проверяет правила</text>
+            <text x="55" y="67" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">requestMatchers()</text>
+            <text x="55" y="82" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#64748b">для текущего URL</text>
+        </g>
+
+        <!-- Слой Spring MVC и Бэкенда -->
+        <path d="M 380 300 L 380 330" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="10" y="335" width="740" height="135" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="25" y="355" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#15803d">УРОВЕНЬ 3: Spring MVC DispatcherServlet, Бизнес-логика и База данных</text>
+
+        <rect x="25" y="370" width="140" height="85" rx="5" fill="#ffffff" stroke="#86efac" stroke-width="1.2"/>
+        <text x="95" y="390" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#166534">DispatcherServlet</text>
+        <text x="95" y="408" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">HandlerMapping -> </text>
+        <text x="95" y="423" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">Находит контроллер</text>
+        <text x="95" y="438" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#64748b">для /api/v1/resource</text>
+
+        <path d="M 170 412 L 195 412" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="200" y="370" width="160" height="85" rx="5" fill="#ffffff" stroke="#86efac" stroke-width="1.2"/>
+        <text x="280" y="390" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#166534">@RestController</text>
+        <text x="280" y="408" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">Парсинг @RequestBody,</text>
+        <text x="280" y="423" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">Bean Validation (@Valid),</text>
+        <text x="280" y="438" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#64748b">Вызов Service слоя</text>
+
+        <path d="M 365 412 L 390 412" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="395" y="370" width="180" height="85" rx="5" fill="#ffffff" stroke="#86efac" stroke-width="1.2"/>
+        <text x="485" y="390" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#166534">Service Layer (AOP)</text>
+        <text x="485" y="408" text-anchor="middle" font-family="Segoe UI" font-size="8" font-weight="bold" fill="#15803d">@PreAuthorize("...")</text>
+        <text x="485" y="423" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">MethodSecurityInterceptor</text>
+        <text x="485" y="438" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#64748b">Транзакции (@Transactional)</text>
+
+        <path d="M 580 412 L 605 412" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <rect x="610" y="370" width="130" height="85" rx="5" fill="#ffffff" stroke="#86efac" stroke-width="1.2"/>
+        <text x="675" y="390" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#166534">JPA / PostgreSQL</text>
+        <text x="675" y="408" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">Repository Layer</text>
+        <text x="675" y="423" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">SQL Query Execution</text>
+        <text x="675" y="438" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#64748b">Возврат сущностей</text>
+    </svg>
+    <div class="diagram-caption">Рис. 3.1. Полный сквозной путь HTTP-запроса через все уровни абстракции Spring Framework</div>
+</div>
+
+<h3>3.1. Детальный разбор каждого шага потока обработки</h3>
+<ol>
+    <li><strong>Сетевой транспорт (Tomcat Connector):</strong> Запрос десериализуется из бинарного потока сокета в стандартные Java-объекты <code>HttpServletRequest</code> и <code>HttpServletResponse</code>.</li>
+    <li><strong>DelegatingFilterProxy:</strong> Стандартный класс сервлетов из пакета <code>org.springframework.web.filter</code>. Он регистрируется в контейнере сервлетов и перенаправляет вызовы методу <code>doFilter()</code> Spring-бина с именем <code>springSecurityFilterChain</code>. Это позволяет использовать внутри фильтра внедрение зависимостей (Dependency Injection).</li>
+    <li><strong>FilterChainProxy:</strong> Сердце Spring Security. Содержит список цепочек <code>SecurityFilterChain</code>. На основе URL-паттерна он выбирает подходящую цепочку фильтров для текущего запроса.</li>
+    <li><strong>SecurityContextHolderFilter:</strong> Первый фильтр безопасности. Он извлекает существующий <code>SecurityContext</code> из хранилища (например, из HTTP-сессии, если включен stateful режим) и помещает его в <code>SecurityContextHolder</code> текущего потока. В конце запроса он гарантированно очищает <code>ThreadLocal</code>, предотвращая утечку данных в пул потоков Tomcat.</li>
+    <li><strong>Аутентификационный фильтр (JWT / Basic / Form):</strong> Анализирует заголовки (<code>Authorization</code>) или тело. Если реквизиты корректны, конструирует объект <code>Authentication</code> и помещает его в <code>SecurityContextHolder.getContext().setAuthentication(...)</code>.</li>
+    <li><strong>ExceptionTranslationFilter:</strong> Перехватывает исключения безопасности. Если выброшен <code>AuthenticationException</code> (пользователь анонимен), фильтр запускает <code>AuthenticationEntryPoint</code> (отдает 401 или редиректит на форму входа). Если выброшен <code>AccessDeniedException</code> (пользователь вошел, но прав недостаточно), запускается <code>AccessDeniedHandler</code> (отдает HTTP 403 Forbidden).</li>
+    <li><strong>AuthorizationFilter (бывший FilterSecurityInterceptor):</strong> Выполняет авторизацию на уровне URL (проверяет правила, заданные в <code>authorizeHttpRequests</code>). Если доступ запрещен, бросает <code>AccessDeniedException</code>.</li>
+    <li><strong>DispatcherServlet и контроллеры:</strong> Запрос попадает в стандартный MVC-конвейер, где выполняется привязка параметров, валидация DTO через Hibernate Validator (<code>@Valid</code>) и вызов бизнес-методов.</li>
+    <li><strong>Method Security (AOP):</strong> Если на сервисе объявлена аннотация <code>@PreAuthorize("hasAuthority('...')")</code>, Spring CGLIB-прокси перехватывает вызов метода до его выполнения, вычисляет SpEL-выражение над текущим <code>SecurityContext</code> и разрешает или блокирует выполнение.</li>
+</ol>
+
+<!-- ГЛАВА 4 -->
+<h2 id="ch4">Глава 4. Факторы и методы аутентификации</h2>
+<p>
+Аутентификация строится на предоставлении субъектом одного или нескольких независимых доказательств его подлинности (факторов).
+</p>
+
+<h3>4.1. Классификация факторов аутентификации</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Фактор</th>
+            <th>Категория</th>
+            <th>Примеры реализации</th>
+            <th>Степень уязвимости</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Knowledge (Знание)</strong></td>
+            <td>«То, что субъект знает»</td>
+            <td>Пароль, кодовое слово, графический ключ, PIN-код.</td>
+            <td>Высокая (подвержен фишингу, перебору, утечкам баз данных).</td>
+        </tr>
+        <tr>
+            <td><strong>Possession (Владение)</strong></td>
+            <td>«То, чем субъект владеет»</td>
+            <td>Смартфон (SMS/Push), TOTP-генератор (Google Authenticator), криптографический USB-токен (YubiKey), смарт-карта.</td>
+            <td>Средняя/Низкая (требует физического или программного завладения устройством).</td>
+        </tr>
+        <tr>
+            <td><strong>Inherence (Свойство)</strong></td>
+            <td>«То, чем субъект является»</td>
+            <td>Отпечаток пальца, сканер сетчатки/радужки глаза, 3D Face ID, голосовой слепок.</td>
+            <td>Крайне низкая (но невозможно скомпрометированный биометрический слепок «сменить», как пароль).</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>4.2. Механизмы двухфакторной аутентификации (2FA / MFA)</h3>
+<p>
+<strong>Двухфакторная аутентификация (2FA)</strong> строго требует предъявления доказательств из двух <em>разных</em> категорий (например, Пароль [Knowledge] + TOTP код [Possession]). Запрос двух паролей подряд не является 2FA.
+</p>
+
+<h4>1. SMS и E-mail одноразовые пароли (OTP)</h4>
+<p>
+Сервер генерирует случайное число (обычно 6 цифр), сохраняет его в кэше с TTL (например, 120 секунд) и отправляет провайдеру связи.
+<br><strong>Недостатки:</strong> Уязвимость к атакам перехвата SS7 в сотовых сетях, перевыпуск SIM-карты злоумышленником (SIM swap), задержки доставки операторами.
+</p>
+
+<h4>2. Алгоритм TOTP (Time-based One-Time Password, RFC 6238) — Google Authenticator</h4>
+<p>
+Ключевое преимущество TOTP — генератор работает <strong>полностью автономно</strong> без подключения к интернету и сотовой сети.
+</p>
+<ul>
+    <li><strong>Фаза настройки:</strong> Сервер генерирует криптостойкий общий секретный ключ (Shared Secret, $K$) в формате Base32 (например, <code>JBSWY3DPEHPK3PXP</code>). Пользователю отображается QR-код с URI схемы <code>otpauth://totp/App:user@mail.com?secret=JBSWY3DPEHPK3PXP&issuer=App</code>. Приложение сканирует QR-код и сохраняет ключ $K$.</li>
+    <li><strong>Фаза генерации:</strong> Текущее время Unix (в секундах) делится на временной шаг (обычно $T_0 = 30$ сек): $T = \lfloor \text{currentTime} / 30 \rfloor$.
+    <br>Вычисляется HMAC-хэш: $\text{HMAC-SHA1}(K, T)$. Из хэша по алгоритму динамического усечения (Dynamic Truncation) извлекаются 6 десятичных цифр.</li>
+    <li><strong>Фаза проверки:</strong> Сервер выполняет аналогичное математическое вычисление для текущего $T$, а также для $T-1$ и $T+1$ (допуск на рассинхронизацию часов на клиенте). Если значения совпадают — аутентификация успешна.</li>
+</ul>
+
+<h4>3. Аппаратные ключи FIDO2 / WebAuthn</h4>
+<p>
+Современный золотой стандарт безопасности. Базируется на асимметричной криптографии (открытый/закрытый ключ). Закрытый ключ генерируется внутри защищенного чипа аппаратного токена и никогда не покидает его. Защищает от фишинга на 100%, так как браузер передает токену криптографическую привязку к конкретному доменному имени (Origin).
+</p>
+
+<!-- ГЛАВА 5 -->
+<div class="page-break"></div>
+<h2 id="ch5">Глава 5. Базовая настройка Spring Security с нуля</h2>
+<p>
+В современных версиях Spring Security (начиная с версий 5.7 и 6.x) устарел конфигурационный класс <code>WebSecurityConfigurerAdapter</code>. Конфигурация строится на декларативном объявлении бинов компонентов.
+</p>
+
+<h3>5.1. Подключение зависимостей (Gradle / Maven)</h3>
+<pre><code><span class="code-comment">// build.gradle.kts</span>
+dependencies {
+    implementation(<span class="code-string">"org.springframework.boot:spring-boot-starter-web"</span>)
+    implementation(<span class="code-string">"org.springframework.boot:spring-boot-starter-security"</span>)
+    implementation(<span class="code-string">"org.springframework.boot:spring-boot-starter-validation"</span>)
+    testImplementation(<span class="code-string">"org.springframework.security:spring-security-test"</span>)
+}</code></pre>
+
+<h3>5.2. Поведение «из коробки» (Default Behavior)</h3>
+<p>
+Сразу после подключения <code>spring-boot-starter-security</code> без написания единой строчки кода активируются дефолтные автоконфигурации (<code>SecurityAutoConfiguration</code>):
+</p>
+<ul>
+    <li>Все HTTP-эндпоинты приложения закрываются правилом <code>authenticated()</code>.</li>
+    <li>Генерируется пользователь по умолчанию с логином <code>user</code> и случайным UUID-паролем, который выводится в консоль при старте: <code>Using generated security password: ...</code>.</li>
+    <li>Активируется базовая форма входа (<code>DefaultLoginPageGeneratingFilter</code>) по адресу <code>/login</code>.</li>
+    <li>Включается CSRF-защита и поддержка HTTP-сессий (Stateful).</li>
+</ul>
+
+<h3>5.3. Эталонная конфигурация SecurityConfiguration (Spring Security 6.x)</h3>
+<pre><code><span class="code-annotation">@Configuration</span>
+<span class="code-annotation">@EnableWebSecurity</span>
+<span class="code-annotation">@EnableMethodSecurity</span>(prePostEnabled = <span class="code-keyword">true</span>)
+<span class="code-keyword">public class</span> <span class="code-type">SecurityConfiguration</span> {
+
+    <span class="code-annotation">@Bean</span>
+    <span class="code-keyword">public</span> <span class="code-type">PasswordEncoder</span> <span class="code-method">passwordEncoder</span>() {
+        <span class="code-comment">// BCrypt с фактором трудоемкости 12 (4096 раундов хэширования)</span>
+        <span class="code-keyword">return new</span> <span class="code-type">BCryptPasswordEncoder</span>(<span class="code-number">12</span>);
+    }
+
+    <span class="code-annotation">@Bean</span>
+    <span class="code-keyword">public</span> <span class="code-type">SecurityFilterChain</span> <span class="code-method">securityFilterChain</span>(<span class="code-type">HttpSecurity</span> http) <span class="code-keyword">throws</span> <span class="code-type">Exception</span> {
+        <span class="code-keyword">return</span> http
+            <span class="code-comment">// 1. Отключаем CSRF (для REST API со stateless токенами)</span>
+            .csrf(<span class="code-type">AbstractHttpConfigurer</span>::disable)
+            <span class="code-comment">// 2. Отключаем сессии на сервере (Stateless архитектура)</span>
+            .sessionManagement(session -&gt; 
+                session.sessionCreationPolicy(<span class="code-type">SessionCreationPolicy</span>.STATELESS)
+            )
+            <span class="code-comment">// 3. Настройка прав доступа к URL</span>
+            .authorizeHttpRequests(auth -&gt; auth
+                .requestMatchers(<span class="code-string">"/api/v1/auth/**"</span>, <span class="code-string">"/public/**"</span>).permitAll()
+                .requestMatchers(<span class="code-type">HttpMethod</span>.GET, <span class="code-string">"/api/v1/products/**"</span>).hasAuthority(<span class="code-string">"PRODUCT_READ"</span>)
+                .requestMatchers(<span class="code-string">"/api/v1/admin/**"</span>).hasRole(<span class="code-string">"ADMIN"</span>)
+                .anyRequest().authenticated()
+            )
+            <span class="code-comment">// 4. Обработка ошибок аутентификации и доступа</span>
+            .exceptionHandling(exceptions -&gt; exceptions
+                .authenticationEntryPoint((request, response, authException) -&gt; 
+                    response.sendError(<span class="code-type">HttpServletResponse</span>.SC_UNAUTHORIZED, <span class="code-string">"Необходима аутентификация"</span>)
+                )
+                .accessDeniedHandler((request, response, accessDeniedException) -&gt; 
+                    response.sendError(<span class="code-type">HttpServletResponse</span>.SC_FORBIDDEN, <span class="code-string">"Недостаточно прав доступа"</span>)
+                )
+            )
+            .build();
+    }
+
+    <span class="code-annotation">@Bean</span>
+    <span class="code-keyword">public</span> <span class="code-type">AuthenticationManager</span> <span class="code-method">authenticationManager</span>(
+            <span class="code-type">AuthenticationConfiguration</span> authenticationConfiguration) <span class="code-keyword">throws</span> <span class="code-type">Exception</span> {
+        <span class="code-keyword">return</span> authenticationConfiguration.getAuthenticationManager();
+    }
+}</code></pre>
+
+<h3>5.4. Построчный анатомический разбор конфигурации</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Строка / Фрагмент кода</th>
+            <th>Техническое назначение и влияние на поведение системы</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>@EnableWebSecurity</code></td>
+            <td>Включает интеграцию Spring Security с Spring MVC, регистрирует бин <code>springSecurityFilterChain</code>.</td>
+        </tr>
+        <tr>
+            <td><code>@EnableMethodSecurity</code></td>
+            <td>Активирует AOP-перехватчики для аннотаций <code>@PreAuthorize</code>, <code>@PostAuthorize</code>, <code>@Secured</code> над методами бинов.</td>
+        </tr>
+        <tr>
+            <td><code>new BCryptPasswordEncoder(12)</code></td>
+            <td>Генерирует криптографическую соль (16 байт) и выполняет $2^{12} = 4096$ итераций хэширования, защищая от перебора на GPU/ASIC.</td>
+        </tr>
+        <tr>
+            <td><code>.sessionCreationPolicy(STATELESS)</code></td>
+            <td>Приказывает Spring Security <strong>никогда</strong> не создавать <code>HttpSession</code> и не использовать ее для получения <code>SecurityContext</code>.</td>
+        </tr>
+        <tr>
+            <td><code>.permitAll()</code> vs <code>.authenticated()</code></td>
+            <td><code>permitAll()</code> пропускает любые запросы к указанному матчеру без проверки; <code>authenticated()</code> требует валидного <code>Authentication</code> в контексте.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>5.5. Секреты объявления бина AuthenticationManager</h3>
+<p>
+Один из самых частых вопросов разработчиков: <em>«Зачем мы пишем метод @Bean public AuthenticationManager ... если Spring Security и так уже работает?»</em>.
+</p>
+
+<h4>1. Проблема скрытого менеджера (NoSuchBeanDefinitionException)</h4>
+<p>
+По умолчанию Spring Security создает экземпляр <code>AuthenticationManager</code> глубоко внутри собственных сервлет-фильтров и <strong>не экспортирует его в ApplicationContext</strong> в виде публичного бина.
+Если попытаться внедрить менеджер в контроллер напрямую без явного объявления метода <code>@Bean</code>:
+</p>
+<pre><code><span class="code-annotation">@RestController</span>
+<span class="code-annotation">@RequiredArgsConstructor</span>
+<span class="code-keyword">public class</span> <span class="code-type">AuthController</span> {
+    <span class="code-comment">// ПРИВЕДЕТ К ОШИБКЕ NoSuchBeanDefinitionException при старте приложения!</span>
+    <span class="code-keyword">private final</span> <span class="code-type">AuthenticationManager</span> authenticationManager;
+}</code></pre>
+
+<h4>2. Два канонических способа объявления бина</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Способ</th>
+            <th>Код реализации</th>
+            <th>Особенности применения</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Способ 1 (Рекомендуемый):</strong> Через <code>AuthenticationConfiguration</code></td>
+            <td>
+<pre><code><span class="code-annotation">@Bean</span>
+<span class="code-keyword">public</span> <span class="code-type">AuthenticationManager</span> <span class="code-method">authenticationManager</span>(
+        <span class="code-type">AuthenticationConfiguration</span> authConfig) <span class="code-keyword">throws</span> <span class="code-type">Exception</span> {
+    <span class="code-keyword">return</span> authConfig.getAuthenticationManager();
+}</code></pre>
+            </td>
+            <td><strong>Стандарт Spring Boot 3 / Security 6.</strong> Автоматически находит зарегистрированные в контексте бины <code>UserDetailsService</code> и <code>PasswordEncoder</code>, собирает под капотом <code>DaoAuthenticationProvider</code> и выставляет менеджер наружу.</td>
+        </tr>
+        <tr>
+            <td><strong>Способ 2 (Явный):</strong> Через ручное создание <code>ProviderManager</code></td>
+            <td>
+<pre><code><span class="code-annotation">@Bean</span>
+<span class="code-keyword">public</span> <span class="code-type">AuthenticationManager</span> <span class="code-method">authenticationManager</span>(
+        <span class="code-type">UserDetailsService</span> userDetailsService,
+        <span class="code-type">PasswordEncoder</span> passwordEncoder) {
+    <span class="code-type">DaoAuthenticationProvider</span> provider = <span class="code-keyword">new</span> <span class="code-type">DaoAuthenticationProvider</span>();
+    provider.setUserDetailsService(userDetailsService);
+    provider.setPasswordEncoder(passwordEncoder);
+    <span class="code-keyword">return new</span> <span class="code-type">ProviderManager</span>(provider);
+}</code></pre>
+            </td>
+            <td>Используется, когда требуется подключить несколько провайдеров одновременно (например, <code>DaoAuthenticationProvider</code> + <code>LdapAuthenticationProvider</code>) или задать нестандартные параметры кэширования пользователей.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>3. Что скрывается внутри AuthenticationConfiguration?</h4>
+<p>
+При обращении к исходникам класса <code>AuthenticationConfiguration</code> в IDE можно увидеть внутренние конфигураторы:
+</p>
+<ul>
+    <li><code>InitializeUserDetailsBeanManagerConfigurer</code> — служебный класс, сканирующий Spring-контекст на наличие бина <code>UserDetailsService</code>.</li>
+    <li><code>InitializeAuthenticationProviderBeanManagerConfigurer</code> — конфигуратор, связывающий найденный <code>UserDetailsService</code> и <code>PasswordEncoder</code> в стандартный <code>DaoAuthenticationProvider</code>.</li>
+    <li>Метод <code>getAuthenticationManager()</code> строит и возвращает готовый синглтон <code>ProviderManager</code>.</li>
+</ul>
+
+<!-- ГЛАВА 6 -->
+<h2 id="ch6">Глава 6. HTTP Basic Authentication</h2>
+<h3>6.1. Спецификация протокола (RFC 7617)</h3>
+<p>
+HTTP Basic — старейший стандартизированный метод аутентификации. Клиент передает учетные данные в каждом запросе в HTTP-заголовке <code>Authorization</code>.
+</p>
+<pre><code>Authorization: Basic YWRtaW46cGFzc3dvcmQxMjM=</code></pre>
+<p>
+Значение после префикса <code>Basic </code> формируется путем конкатенации логина, двоеточия и пароля, закодированных по алгоритму Base64:
+<br><code>"admin:password123" --[Base64.encode]--&gt; "YWRtaW46cGFzc3dvcmQxMjM="</code>
+</p>
+<div class="callout danger">
+    <div class="callout-title">Критическая ошибка понимания: Base64 — это не шифрование!</div>
+    <p>Base64 — это алгоритм обратимого позиционного кодирования бинарных данных в ASCII-символы. Любой человек или узел сети, перехвативший заголовок, декодирует пароль за 1 миллисекунду. Использование Basic Auth без TLS/HTTPS абсолютно недопустимо.</p>
+</div>
+
+<h3>6.2. Пошаговая реализация Basic Auth в коде</h3>
+
+<div class="diagram-box">
+    <svg width="100%" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="45" width="140" height="60" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="80" y="70" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">Client Request</text>
+        <text x="80" y="87" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#64748b">Auth: Basic dXNlcjpwYXNz</text>
+
+        <path d="M 150 75 L 180 75" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="185" y="45" width="160" height="60" rx="5" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="265" y="68" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#0369a1">BasicAuthFilter</text>
+        <text x="265" y="85" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">Извлекает логин и пароль</text>
+
+        <path d="M 345 75 L 375 75" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="380" y="45" width="150" height="60" rx="5" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="455" y="68" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#15803d">AuthManager</text>
+        <text x="455" y="85" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">DaoAuthenticationProvider</text>
+
+        <path d="M 530 75 L 560 75" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <rect x="565" y="45" width="125" height="60" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="627" y="68" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#0f3d68">SecurityContext</text>
+        <text x="627" y="85" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#64748b">Успешный вход</text>
+    </svg>
+    <div class="diagram-caption">Рис. 6.1. Жизненный цикл запроса Basic Authentication</div>
+</div>
+
+<pre><code><span class="code-comment">// 1. Доменная сущность UserDetails</span>
+<span class="code-keyword">public class</span> <span class="code-type">CustomUserDetails</span> <span class="code-keyword">implements</span> <span class="code-type">UserDetails</span> {
+    <span class="code-keyword">private final</span> <span class="code-type">UserEntity</span> user;
+
+    <span class="code-keyword">public</span> <span class="code-method">CustomUserDetails</span>(<span class="code-type">UserEntity</span> user) { <span class="code-keyword">this</span>.user = user; }
+
+    <span class="code-annotation">@Override</span>
+    <span class="code-keyword">public</span> <span class="code-type">Collection</span>&lt;? <span class="code-keyword">extends</span> <span class="code-type">GrantedAuthority</span>&gt; <span class="code-method">getAuthorities</span>() {
+        <span class="code-keyword">return</span> user.getRoles().stream()
+            .map(role -&gt; <span class="code-keyword">new</span> <span class="code-type">SimpleGrantedAuthority</span>(role.getName()))
+            .collect(<span class="code-type">Collectors</span>.toSet());
+    }
+    <span class="code-annotation">@Override</span> <span class="code-keyword">public</span> <span class="code-type">String</span> <span class="code-method">getPassword</span>() { <span class="code-keyword">return</span> user.getPasswordHash(); }
+    <span class="code-annotation">@Override</span> <span class="code-keyword">public</span> <span class="code-type">String</span> <span class="code-method">getUsername</span>() { <span class="code-keyword">return</span> user.getUsername(); }
+    <span class="code-annotation">@Override</span> <span class="code-keyword">public boolean</span> <span class="code-method">isEnabled</span>() { <span class="code-keyword">return</span> user.isActive(); }
+    <span class="code-annotation">@Override</span> <span class="code-keyword">public boolean</span> <span class="code-method">isAccountNonExpired</span>() { <span class="code-keyword">return true</span>; }
+    <span class="code-annotation">@Override</span> <span class="code-keyword">public boolean</span> <span class="code-method">isAccountNonLocked</span>() { <span class="code-keyword">return true</span>; }
+    <span class="code-annotation">@Override</span> <span class="code-keyword">public boolean</span> <span class="code-method">isCredentialsNonExpired</span>() { <span class="code-keyword">return true</span>; }
+}
+
+<span class="code-comment">// 2. Сервис загрузки из БД</span>
+<span class="code-annotation">@Service</span>
+<span class="code-annotation">@RequiredArgsConstructor</span>
+<span class="code-keyword">public class</span> <span class="code-type">CustomUserDetailsService</span> <span class="code-keyword">implements</span> <span class="code-type">UserDetailsService</span> {
+    <span class="code-keyword">private final</span> <span class="code-type">UserRepository</span> userRepository;
+
+    <span class="code-annotation">@Override</span>
+    <span class="code-keyword">public</span> <span class="code-type">UserDetails</span> <span class="code-method">loadUserByUsername</span>(<span class="code-type">String</span> username) <span class="code-keyword">throws</span> <span class="code-type">UsernameNotFoundException</span> {
+        <span class="code-type">UserEntity</span> user = userRepository.findByUsername(username)
+            .orElseThrow(() -&gt; <span class="code-keyword">new</span> <span class="code-type">UsernameNotFoundException</span>(<span class="code-string">"Пользователь не найден: "</span> + username));
+        <span class="code-keyword">return new</span> <span class="code-type">CustomUserDetails</span>(user);
+    }
+}</code></pre>
+
+<!-- ГЛАВА 7 -->
+<div class="page-break"></div>
+<h2 id="ch7">Глава 7. Архитектура и реализация JWT (JSON Web Tokens)</h2>
+<h3>7.1. Спецификация структуры токена (RFC 7519)</h3>
+<p>
+JWT представляет собой строку из трех сегментов, разделенных точками: <code>HEADER.PAYLOAD.SIGNATURE</code>.
+</p>
+
+<div class="diagram-box">
+    <svg width="100%" height="180" viewBox="0 0 740 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- Header -->
+        <rect x="15" y="20" width="220" height="135" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="125" y="45" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#991b1b">1. HEADER (Заголовок)</text>
+        <text x="25" y="70" font-family="Consolas" font-size="8.5" fill="#7f1d1d">{</text>
+        <text x="35" y="87" font-family="Consolas" font-size="8.5" fill="#7f1d1d">  "alg": "HS256",</text>
+        <text x="35" y="104" font-family="Consolas" font-size="8.5" fill="#7f1d1d">  "typ": "JWT"</text>
+        <text x="25" y="121" font-family="Consolas" font-size="8.5" fill="#7f1d1d">}</text>
+        <text x="125" y="143" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#b91c1c">Base64URL encoded</text>
+
+        <text x="245" y="90" text-anchor="middle" font-family="Segoe UI" font-size="20" font-weight="bold" fill="#64748b">.</text>
+
+        <!-- Payload -->
+        <rect x="255" y="20" width="230" height="135" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="370" y="45" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#92400e">2. PAYLOAD (Полезная нагрузка)</text>
+        <text x="265" y="65" font-family="Consolas" font-size="8" fill="#78350f">{</text>
+        <text x="275" y="80" font-family="Consolas" font-size="8" fill="#78350f">  "sub": "alex_dev",</text>
+        <text x="275" y="95" font-family="Consolas" font-size="8" fill="#78350f">  "roles": ["ROLE_USER"],</text>
+        <text x="275" y="110" font-family="Consolas" font-size="8" fill="#78350f">  "iat": 1724490000,</text>
+        <text x="275" y="125" font-family="Consolas" font-size="8" fill="#78350f">  "exp": 1724490900</text>
+        <text x="265" y="140" font-family="Consolas" font-size="8" fill="#78350f">}</text>
+
+        <text x="495" y="90" text-anchor="middle" font-family="Segoe UI" font-size="20" font-weight="bold" fill="#64748b">.</text>
+
+        <!-- Signature -->
+        <rect x="505" y="20" width="220" height="135" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="615" y="45" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#1e40af">3. SIGNATURE (Подпись)</text>
+        <text x="515" y="70" font-family="Segoe UI" font-size="8.5" fill="#1e3a8a">HMACSHA256(</text>
+        <text x="525" y="88" font-family="Segoe UI" font-size="8" fill="#1e3a8a">base64Url(Header) + "." +</text>
+        <text x="525" y="104" font-family="Segoe UI" font-size="8" fill="#1e3a8a">base64Url(Payload),</text>
+        <text x="525" y="122" font-family="Segoe UI" font-size="8" font-weight="bold" fill="#1d4ed8">secretKey</text>
+        <text x="515" y="140" font-family="Segoe UI" font-size="8.5" fill="#1e3a8a">)</text>
+    </svg>
+    <div class="diagram-caption">Рис. 7.1. Структура и математический алгоритм формирования JWT токена</div>
+</div>
+
+<h3>7.2. Разница между JWS (Signing) и JWE (Encryption)</h3>
+<ul>
+    <li><strong>JWS (JSON Web Signature):</strong> Данные внутри Payload <em>открыты для чтения</em> всем участникам обмена. Подпись гарантирует только то, что данные не были подделаны. Подходит для токенов авторизации API.</li>
+    <li><strong>JWE (JSON Web Encryption):</strong> Полезная нагрузка зашифрована симметричным или асимметричным шифром (AES-GCM, RSA-OAEP). Содержимое Payload невозможно прочитать без ключа дешифрования. Используется для передачи конфиденциальных PII-данных.</li>
+</ul>
+
+<h3>7.3. Симметричная (HMAC) vs Асимметричная подпись (RSA / ECDSA)</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Критерий</th>
+            <th>Симметричная (HS256, HS384, HS512)</th>
+            <th>Асимметричная (RS256, ES256, EdDSA)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Ключи</strong></td>
+            <td>Один общий секрет (Shared Secret).</td>
+            <td>Пара: Private Key (закрытый) и Public Key (открытый).</td>
+        </tr>
+        <tr>
+            <td><strong>Генерация подписи</strong></td>
+            <td>Секретным ключом на сервере авторизации.</td>
+            <td>Private Key на Authorization Server.</td>
+        </tr>
+        <tr>
+            <td><strong>Проверка подписи</strong></td>
+            <td>Тем же секретным ключом.</td>
+            <td>Public Key (можно раздавать сотням микросервисов).</td>
+        </tr>
+        <tr>
+            <td><strong>Сценарий применения</strong></td>
+            <td>Монолитные приложения или единый бэкенд.</td>
+            <td>Микросервисная архитектура, OAuth 2.0 / OpenID Connect.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>7.4. Эталонный класс JwtService (на базе библиотеки JJWT 0.12+)</h3>
+<pre><code><span class="code-annotation">@Service</span>
+<span class="code-keyword">public class</span> <span class="code-type">JwtService</span> {
+
+    <span class="code-annotation">@Value</span>(<span class="code-string">"${app.jwt.secret}"</span>)
+    <span class="code-keyword">private</span> <span class="code-type">String</span> secretKey;
+
+    <span class="code-annotation">@Value</span>(<span class="code-string">"${app.jwt.access-token-expiration}"</span>)
+    <span class="code-keyword">private</span> <span class="code-type">Duration</span> tokenExpiration;
+
+    <span class="code-keyword">public</span> <span class="code-type">String</span> <span class="code-method">generateToken</span>(<span class="code-type">UserDetails</span> userDetails) {
+        <span class="code-type">Instant</span> now = <span class="code-type">Instant</span>.now();
+        <span class="code-type">List</span>&lt;<span class="code-type">String</span>&gt; roles = userDetails.getAuthorities().stream()
+                .map(<span class="code-type">GrantedAuthority</span>::getAuthority)
+                .toList();
+
+        <span class="code-keyword">return</span> <span class="code-type">Jwts</span>.builder()
+                .subject(userDetails.getUsername())
+                .claim(<span class="code-string">"roles"</span>, roles)
+                .issuedAt(<span class="code-type">Date</span>.from(now))
+                .expiration(<span class="code-type">Date</span>.from(now.plus(tokenExpiration)))
+                .signWith(getSigningKey(), <span class="code-type">Jwts</span>.SIG.HS256)
+                .compact();
+    }
+
+    <span class="code-keyword">public</span> <span class="code-type">String</span> <span class="code-method">extractUsername</span>(<span class="code-type">String</span> token) {
+        <span class="code-keyword">return</span> extractClaim(token, <span class="code-type">Claims</span>::getSubject);
+    }
+
+    <span class="code-keyword">public boolean</span> <span class="code-method">isTokenValid</span>(<span class="code-type">String</span> token, <span class="code-type">UserDetails</span> userDetails) {
+        <span class="code-keyword">final</span> <span class="code-type">String</span> username = extractUsername(token);
+        <span class="code-keyword">return</span> (username.equals(userDetails.getUsername())) &amp;&amp; !isTokenExpired(token);
+    }
+
+    <span class="code-keyword">private boolean</span> <span class="code-method">isTokenExpired</span>(<span class="code-type">String</span> token) {
+        <span class="code-keyword">return</span> extractExpiration(token).before(<span class="code-keyword">new</span> <span class="code-type">Date</span>());
+    }
+
+    <span class="code-keyword">private</span> <span class="code-type">Date</span> <span class="code-method">extractExpiration</span>(<span class="code-type">String</span> token) {
+        <span class="code-keyword">return</span> extractClaim(token, <span class="code-type">Claims</span>::getExpiration);
+    }
+
+    <span class="code-keyword">public</span> &lt;<span class="code-type">T</span>&gt; <span class="code-type">T</span> <span class="code-method">extractClaim</span>(<span class="code-type">String</span> token, <span class="code-type">Function</span>&lt;<span class="code-type">Claims</span>, <span class="code-type">T</span>&gt; claimsResolver) {
+        <span class="code-keyword">final</span> <span class="code-type">Claims</span> claims = parseAllClaims(token);
+        <span class="code-keyword">return</span> claimsResolver.apply(claims);
+    }
+
+    <span class="code-keyword">private</span> <span class="code-type">Claims</span> <span class="code-method">parseAllClaims</span>(<span class="code-type">String</span> token) {
+        <span class="code-keyword">return</span> <span class="code-type">Jwts</span>.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    <span class="code-keyword">private</span> <span class="code-type">SecretKey</span> <span class="code-method">getSigningKey</span>() {
+        <span class="code-keyword">byte</span>[] keyBytes = <span class="code-type">Decoders</span>.BASE64.decode(secretKey);
+        <span class="code-keyword">return</span> <span class="code-type">Keys</span>.hmacShaKeyFor(keyBytes);
+    }
+}</code></pre>
+
+<h3>7.5. Аутентификационный фильтр JwtAuthenticationFilter</h3>
+<pre><code><span class="code-annotation">@Component</span>
+<span class="code-annotation">@RequiredArgsConstructor</span>
+<span class="code-keyword">public class</span> <span class="code-type">JwtAuthenticationFilter</span> <span class="code-keyword">extends</span> <span class="code-type">OncePerRequestFilter</span> {
+
+    <span class="code-keyword">private final</span> <span class="code-type">JwtService</span> jwtService;
+    <span class="code-keyword">private final</span> <span class="code-type">UserDetailsService</span> userDetailsService;
+
+    <span class="code-annotation">@Override</span>
+    <span class="code-keyword">protected void</span> <span class="code-method">doFilterInternal</span>(
+            <span class="code-annotation">@NonNull</span> <span class="code-type">HttpServletRequest</span> request,
+            <span class="code-annotation">@NonNull</span> <span class="code-type">HttpServletResponse</span> response,
+            <span class="code-annotation">@NonNull</span> <span class="code-type">FilterChain</span> filterChain) <span class="code-keyword">throws</span> <span class="code-type">ServletException</span>, <span class="code-type">IOException</span> {
+
+        <span class="code-keyword">final</span> <span class="code-type">String</span> authHeader = request.getHeader(<span class="code-string">"Authorization"</span>);
+        <span class="code-keyword">final String</span> bearerPrefix = <span class="code-string">"Bearer "</span>;
+
+        <span class="code-comment">// Если заголовок отсутствует или не начинается с Bearer - пропускаем дальше по цепочке</span>
+        <span class="code-keyword">if</span> (authHeader == <span class="code-keyword">null</span> || !authHeader.startsWith(bearerPrefix)) {
+            filterChain.doFilter(request, response);
+            <span class="code-keyword">return</span>;
+        }
+
+        <span class="code-keyword">final</span> <span class="code-type">String</span> jwt = authHeader.substring(bearerPrefix.length()).trim();
+        <span class="code-keyword">try</span> {
+            <span class="code-keyword">final</span> <span class="code-type">String</span> username = jwtService.extractUsername(jwt);
+
+            <span class="code-comment">// Проверяем, что username извлечен и пользователь еще не аутентифицирован в контексте</span>
+            <span class="code-keyword">if</span> (username != <span class="code-keyword">null</span> &amp;&amp; <span class="code-type">SecurityContextHolder</span>.getContext().getAuthentication() == <span class="code-keyword">null</span>) {
+                <span class="code-type">UserDetails</span> userDetails = <span class="code-keyword">this</span>.userDetailsService.loadUserByUsername(username);
+
+                <span class="code-keyword">if</span> (jwtService.isTokenValid(jwt, userDetails)) {
+                    <span class="code-type">UsernamePasswordAuthenticationToken</span> authToken = <span class="code-keyword">new</span> <span class="code-type">UsernamePasswordAuthenticationToken</span>(
+                            userDetails,
+                            <span class="code-keyword">null</span>, <span class="code-comment">// Пароль обнуляется в целях безопасности</span>
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(<span class="code-keyword">new</span> <span class="code-type">WebAuthenticationDetailsSource</span>().buildDetails(request));
+                    
+                    <span class="code-comment">// Наполняем SecurityContext!</span>
+                    <span class="code-type">SecurityContextHolder</span>.getContext().setAuthentication(authToken);
+                }
+            }
+        } <span class="code-keyword">catch</span> (<span class="code-type">Exception</span> e) {
+            <span class="code-comment">// Ошибки валидации токена (истек, поврежден) приводят к очистке контекста</span>
+            <span class="code-type">SecurityContextHolder</span>.clearContext();
+        }
+
+        filterChain.doFilter(request, response);
+    }
+}</code></pre>
+
+<!-- ГЛАВА 8 -->
+<div class="page-break"></div>
+<h2 id="ch8">Глава 8. Двухтокеновая схема: JWT Access + Refresh Token</h2>
+<h3>8.1. Фундаментальная проблема одиночного Access токена</h3>
+<p>
+Поскольку JWT является самодостаточным (stateless) токеном, сервер проверяет только его математическую подпись и срок действия <code>exp</code>. Сервер <strong>не может отозвать</strong> валидный Access Token до истечения его срока действия без введения централизованного черного списка (Blacklist в Redis), что уничтожает идею stateless.
+</p>
+<ul>
+    <li>Если сделать Access Token долгоживущим (например, 30 дней) — в случае кражи токена злоумышленник владеет аккаунтом целый месяц.</li>
+    <li>Если сделать Access Token короткоживущим (10 минут) — пользователю придется каждые 10 минут заново вводить логин и пароль.</li>
+</ul>
+
+<h3>8.2. Решение: разделение ролей Access и Refresh токенов</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Характеристика</th>
+            <th>Access Token (Токен доступа)</th>
+            <th>Refresh Token (Токен обновления)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Формат</strong></td>
+            <td>Подписанный JWT (JWS).</td>
+            <td>Непрозрачная случайная криптостойкая строка (UUID или SecureRandom 64 байта).</td>
+        </tr>
+        <tr>
+            <td><strong>Время жизни (TTL)</strong></td>
+            <td>Короткое: от 5 до 15 минут.</td>
+            <td>Длинное: от 7 до 60 дней.</td>
+        </tr>
+        <tr>
+            <td><strong>Хранение на бэкенде</strong></td>
+            <td>Нигде не сохраняется (Stateless).</td>
+            <td>Обязательно сохраняется в БД / Redis (только в виде SHA-256 хэша!).</td>
+        </tr>
+        <tr>
+            <td><strong>Область применения</strong></td>
+            <td>Отправляется в каждом запросе к бизнес-API: <code>Authorization: Bearer ...</code>.</td>
+            <td>Отправляется <strong>только</strong> на эндпоинт <code>POST /api/v1/auth/refresh</code>.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>8.3. Ротация Refresh-токенов (Token Rotation) и защита от Replay-атак</h3>
+
+<div class="diagram-box">
+    <svg width="100%" height="240" viewBox="0 0 740 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="10" width="720" height="220" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+        
+        <!-- Шаг 1 -->
+        <circle cx="35" cy="40" r="14" fill="#0284c7"/>
+        <text x="35" y="45" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#ffffff">1</text>
+        <text x="60" y="45" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">Клиент: POST /auth/refresh { refreshToken: "RT-1" }</text>
+
+        <!-- Шаг 2 -->
+        <circle cx="35" cy="85" r="14" fill="#0284c7"/>
+        <text x="35" y="90" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#ffffff">2</text>
+        <text x="60" y="85" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">Сервер: Поиск по SHA-256("RT-1") в БД</text>
+        <text x="60" y="102" font-family="Segoe UI" font-size="8.5" fill="#475569">Проверка: токен найден, expiresAt > now, revoked == false.</text>
+
+        <!-- Шаг 3 -->
+        <circle cx="35" cy="140" r="14" fill="#16a34a"/>
+        <text x="35" y="145" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#ffffff">3</text>
+        <text x="60" y="140" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#15803d">Легитимная ротация: RT-1 помечается revoked = true</text>
+        <text x="60" y="157" font-family="Segoe UI" font-size="8.5" fill="#15803d">Генерируется новый RT-2 и новый AccessToken. Возврат клиенту.</text>
+
+        <!-- Шаг 4: Атака -->
+        <circle cx="35" cy="195" r="14" fill="#dc2626"/>
+        <text x="35" y="200" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#ffffff">!</text>
+        <text x="60" y="195" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#b91c1c">Попытка Replay-атаки: Злоумышленник шлет украденный RT-1</text>
+        <text x="60" y="212" font-family="Segoe UI" font-size="8.5" fill="#b91c1c">Сервер видит RT-1 со статусом revoked=true -> ТРЕВОГА! Компрометация всей сессии -> Инвалидация ВСЕХ токенов пользователя!</text>
+    </svg>
+    <div class="diagram-caption">Рис. 8.1. Алгоритм Refresh Token Rotation с обнаружением повторного использования (Replay Detection)</div>
+</div>
+
+<h3>8.4. Эталонный сервис RefreshTokenService</h3>
+<pre><code><span class="code-annotation">@Service</span>
+<span class="code-annotation">@RequiredArgsConstructor</span>
+<span class="code-keyword">public class</span> <span class="code-type">RefreshTokenService</span> {
+
+    <span class="code-annotation">@Value</span>(<span class="code-string">"${app.jwt.refresh-token-expiration}"</span>)
+    <span class="code-keyword">private</span> <span class="code-type">Duration</span> refreshExpiration;
+
+    <span class="code-keyword">private final</span> <span class="code-type">RefreshTokenRepository</span> refreshTokenRepository;
+    <span class="code-keyword">private final</span> <span class="code-type">UserRepository</span> userRepository;
+    <span class="code-keyword">private final</span> <span class="code-type">JwtService</span> jwtService;
+
+    <span class="code-annotation">@Transactional</span>
+    <span class="code-keyword">public</span> <span class="code-type">String</span> <span class="code-method">createRefreshToken</span>(<span class="code-type">String</span> username) {
+        <span class="code-type">UserEntity</span> user = userRepository.findByUsername(username)
+                .orElseThrow(() -&gt; <span class="code-keyword">new</span> <span class="code-type">EntityNotFoundException</span>(<span class="code-string">"User not found"</span>));
+
+        <span class="code-type">String</span> rawToken = <span class="code-type">UUID</span>.randomUUID().toString();
+        <span class="code-type">String</span> tokenHash = hashToken(rawToken);
+
+        <span class="code-type">RefreshTokenEntity</span> entity = <span class="code-type">RefreshTokenEntity</span>.builder()
+                .user(user)
+                .tokenHash(tokenHash)
+                .expiresAt(<span class="code-type">Instant</span>.now().plus(refreshExpiration))
+                .revoked(<span class="code-keyword">false</span>)
+                .build();
+
+        refreshTokenRepository.save(entity);
+        <span class="code-keyword">return</span> rawToken; <span class="code-comment">// Клиенту отдаем ТОЛЬКО сырой UUID</span>
+    }
+
+    <span class="code-annotation">@Transactional</span>
+    <span class="code-keyword">public</span> <span class="code-type">TokenResponse</span> <span class="code-method">rotateRefreshToken</span>(<span class="code-type">String</span> rawRefreshToken) {
+        <span class="code-type">String</span> incomingHash = hashToken(rawRefreshToken);
+        
+        <span class="code-type">RefreshTokenEntity</span> tokenEntity = refreshTokenRepository.findByTokenHash(incomingHash)
+                .orElseThrow(() -&gt; <span class="code-keyword">new</span> <span class="code-type">BadCredentialsException</span>(<span class="code-string">"Invalid refresh token"</span>));
+
+        <span class="code-comment">// ОБНАРУЖЕНИЕ АТАКИ ПОВТОРНОГО ИСПОЛЬЗОВАНИЯ (Replay Attack)</span>
+        <span class="code-keyword">if</span> (tokenEntity.isRevoked()) {
+            <span class="code-comment">// Токен уже был использован ранее! Инвалидируем ВСЕ токены пользователя</span>
+            refreshTokenRepository.revokeAllUserTokens(tokenEntity.getUser().getId());
+            <span class="code-keyword">throw new</span> <span class="code-type">BadCredentialsException</span>(<span class="code-string">"Compromised token reuse detected"</span>);
+        }
+
+        <span class="code-comment">// Проверка срока действия</span>
+        <span class="code-keyword">if</span> (tokenEntity.getExpiresAt().isBefore(<span class="code-type">Instant</span>.now())) {
+            tokenEntity.setRevoked(<span class="code-keyword">true</span>);
+            refreshTokenRepository.save(tokenEntity);
+            <span class="code-keyword">throw new</span> <span class="code-type">BadCredentialsException</span>(<span class="code-string">"Refresh token expired"</span>);
+        }
+
+        <span class="code-comment">// 1. Отзываем текущий токен</span>
+        tokenEntity.setRevoked(<span class="code-keyword">true</span>);
+        refreshTokenRepository.save(tokenEntity);
+
+        <span class="code-comment">// 2. Выпускаем новую пару</span>
+        <span class="code-type">String</span> newRawRefreshToken = createRefreshToken(tokenEntity.getUser().getUsername());
+        <span class="code-type">String</span> newAccessToken = jwtService.generateToken(tokenEntity.getUser());
+
+        <span class="code-keyword">return new</span> <span class="code-type">TokenResponse</span>(newAccessToken, newRawRefreshToken);
+    }
+
+    <span class="code-keyword">private</span> <span class="code-type">String</span> <span class="code-method">hashToken</span>(<span class="code-type">String</span> rawToken) {
+        <span class="code-keyword">try</span> {
+            <span class="code-type">MessageDigest</span> digest = <span class="code-type">MessageDigest</span>.getInstance(<span class="code-string">"SHA-256"</span>);
+            <span class="code-keyword">byte</span>[] hash = digest.digest(rawToken.getBytes(<span class="code-type">StandardCharsets</span>.UTF_8));
+            <span class="code-keyword">return</span> <span class="code-type">HexFormat</span>.of().formatHex(hash);
+        } <span class="code-keyword">catch</span> (<span class="code-type">NoSuchAlgorithmException</span> e) {
+            <span class="code-keyword">throw new</span> <span class="code-type">IllegalStateException</span>(<span class="code-string">"SHA-256 algorithm missing"</span>, e);
+        }
+    }
+}</code></pre>
+
+<!-- ГЛАВА 9 -->
+<div class="page-break"></div>
+<h2 id="ch9">Глава 9. Протокол OAuth 2.0 (RFC 6749, RFC 7636)</h2>
+<h3>9.1. Концепция делегированной авторизации</h3>
+<p>
+OAuth 2.0 — это протокол, решающий фундаментальную задачу: как предоставить стороннему приложению (Client) ограниченный доступ к ресурсам пользователя (Resource Owner) на удаленном сервере (Resource Server) <strong>без передачи этому приложению логина и пароля пользователя</strong>.
+</p>
+
+<h3>9.2. Роли в протоколе OAuth 2.0</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Роль</th>
+            <th>Описание</th>
+            <th>Пример из реальной жизни</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Resource Owner</strong></td>
+            <td>Владелец данных (пользователь).</td>
+            <td>Человек с учетной записью Google / GitHub.</td>
+        </tr>
+        <tr>
+            <td><strong>Client</strong></td>
+            <td>Приложение, запрашивающее доступ.</td>
+            <td>Наш бэкенд или SPA-фронтенд складского учета.</td>
+        </tr>
+        <tr>
+            <td><strong>Authorization Server</strong></td>
+            <td>Сервер, аутентифицирующий владельца и выдающий токены.</td>
+            <td>Keycloak, Google OAuth Server, Auth0, Okta.</td>
+        </tr>
+        <tr>
+            <td><strong>Resource Server</strong></td>
+            <td>Сервер, хранящий защищенные API и проверяющий токены.</td>
+            <td>Наш REST API (<code>/api/v1/orders</code>, <code>/api/v1/stock</code>).</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>9.3. Детальный разбор всех Grant Types (Типов выдачи)</h3>
+
+<div class="diagram-box">
+    <svg width="100%" height="280" viewBox="0 0 740 280" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="10" width="130" height="40" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.2"/>
+        <text x="75" y="35" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0369a1">Browser (User)</text>
+
+        <rect x="230" y="10" width="130" height="40" rx="4" fill="#fefce8" stroke="#eab308" stroke-width="1.2"/>
+        <text x="295" y="35" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#854d0e">Client (App)</text>
+
+        <rect x="440" y="10" width="150" height="40" rx="4" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.2"/>
+        <text x="515" y="35" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#15803d">Authorization Server</text>
+
+        <rect x="620" y="10" width="110" height="40" rx="4" fill="#faf5ff" stroke="#a855f7" stroke-width="1.2"/>
+        <text x="675" y="35" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#7e22ce">Resource Server</text>
+
+        <!-- Линии жизни -->
+        <line x1="75" y1="50" x2="75" y2="270" stroke="#cbd5e1" stroke-dasharray="4"/>
+        <line x1="295" y1="50" x2="295" y2="270" stroke="#cbd5e1" stroke-dasharray="4"/>
+        <line x1="515" y1="50" x2="515" y2="270" stroke="#cbd5e1" stroke-dasharray="4"/>
+        <line x1="675" y1="50" x2="675" y2="270" stroke="#cbd5e1" stroke-dasharray="4"/>
+
+        <!-- Шаг 1 -->
+        <path d="M 75 70 L 515 70" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="295" y="65" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#0369a1">1. GET /authorize?response_type=code&client_id&scope&code_challenge (PKCE)</text>
+
+        <!-- Шаг 2 -->
+        <path d="M 515 100 L 75 100" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="295" y="95" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">2. Аутентификация пользователя (Login + Consent Screen)</text>
+
+        <!-- Шаг 3 -->
+        <path d="M 515 130 L 75 130" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="295" y="125" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#0369a1">3. Redirect к redirect_uri?code=AUTH_CODE_123</text>
+
+        <!-- Шаг 4 -->
+        <path d="M 75 160 L 295 160" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="185" y="155" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#0369a1">4. Передача code клиенту</text>
+
+        <!-- Шаг 5 -->
+        <path d="M 295 190 L 515 190" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="405" y="185" text-anchor="middle" font-family="Segoe UI" font-size="8" font-weight="bold" fill="#15803d">5. POST /token (code + code_verifier + client_secret)</text>
+
+        <!-- Шаг 6 -->
+        <path d="M 515 220 L 295 220" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="405" y="215" text-anchor="middle" font-family="Segoe UI" font-size="8" font-weight="bold" fill="#15803d">6. Ответ: { access_token, id_token, refresh_token }</text>
+
+        <!-- Шаг 7 -->
+        <path d="M 295 250 L 675 250" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="485" y="245" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#7e22ce">7. Запрос к API: Authorization: Bearer &lt;access_token&gt;</text>
+    </svg>
+    <div class="diagram-caption">Рис. 9.1. Диаграмма последовательности потока Authorization Code Flow с PKCE (RFC 7636)</div>
+</div>
+
+<h4>1. Authorization Code Grant + PKCE (Proof Key for Code Exchange, RFC 7636)</h4>
+<p>
+Единственный рекомендованный стандарт для пользовательских веб- и мобильных приложений в спецификации OAuth 2.1.
+<br><strong>Принцип PKCE:</strong> Клиент генерирует случайную строку <code>code_verifier</code> и ее SHA-256 хэш <code>code_challenge</code>. Сервер авторизации запоминает challenge. При обмене кода на токен клиент присылает исходный <code>code_verifier</code>. Это полностью исключает перехват одноразового кода авторизации в браузере.
+</p>
+
+<h4>2. Client Credentials Grant</h4>
+<p>
+Используется для взаимодействия <strong>сервис-к-сервису (Machine-to-Machine)</strong> без участия человека. Сервис отправляет свои <code>client_id</code> и <code>client_secret</code> напрямую на эндпоинт <code>/token</code> и получает токен для вызова другого сервиса.
+</p>
+
+<h4>3. Устаревшие и запрещенные в OAuth 2.1 гранты</h4>
+<ul>
+    <li><strong>Resource Owner Password Credentials Grant (Password Grant):</strong> Передача логина и пароля пользователя напрямую в клиентское приложение. <em>Запрещен</em>, так как уничтожает смысл OAuth.</li>
+    <li><strong>Implicit Grant:</strong> Возврат токена напрямую в URL-фрагменте браузера (<code>#access_token=...</code>). <em>Запрещен</em> из-за уязвимости к утечкам через историю браузера и заголовок Referer.</li>
+</ul>
+
+<!-- ГЛАВА 10 -->
+<h2 id="ch10">Глава 10. OpenID Connect (OIDC Core 1.0)</h2>
+<h3>10.1. Идентификация поверх авторизации</h3>
+<p>
+OAuth 2.0 дает только <strong>Access Token</strong> («ключ от двери»). Он ничего не сообщает клиенту о том, <em>кто</em> является пользователем. 
+<br><strong>OpenID Connect (OIDC)</strong> — это надстройка над OAuth 2.0, добавляющая концепцию <strong>Идентификации (Identity)</strong>. OIDC вводит стандартизированный токен — <strong>ID Token</strong>.
+</p>
+
+<h3>10.2. Разница между Access Token и ID Token</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Критерий</th>
+            <th>ID Token (OpenID Connect)</th>
+            <th>Access Token (OAuth 2.0)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Кому адресован (Audience)</strong></td>
+            <td><strong>Клиентскому приложению (Client).</strong> Клиент обязан распарсить и прочитать его.</td>
+            <td><strong>Ресурсному серверу (Resource Server API).</strong> Для клиента токен является непрозрачным.</td>
+        </tr>
+        <tr>
+            <td><strong>Формат</strong></td>
+            <td>Строго стандартизированный JWT.</td>
+            <td>Спецификацией не определен (может быть JWT или Opaque reference).</td>
+        </tr>
+        <tr>
+            <td><strong>Типичные Claims</strong></td>
+            <td><code>sub</code>, <code>iss</code>, <code>aud</code>, <code>exp</code>, <code>name</code>, <code>email</code>, <code>email_verified</code>.</td>
+            <td><code>scope</code>, <code>client_id</code>, <code>permissions</code>, <code>sub</code>.</td>
+        </tr>
+        <tr>
+            <td><strong>Назначение</strong></td>
+            <td>Отобразить в UI профиль: «Вы вошли как Иван (ivan@mail.com)».</td>
+            <td>Передать в заголовок <code>Authorization: Bearer</code> для доступа к данным.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>10.3. Стандартные эндпоинты OIDC провайдера</h3>
+<ul>
+    <li><code>/.well-known/openid-configuration</code> (Discovery Document): Метаданные сервера (список URL, поддерживаемые алгоритмы подписи, адрес JWKS).</li>
+    <li><code>/protocol/openid-connect/certs</code> (JWKS — JSON Web Key Set): Набор публичных RSA/EC ключей провайдера для проверки подписи токенов ресурсными серверами.</li>
+    <li><code>/protocol/openid-connect/userinfo</code> (UserInfo Endpoint): Защищенный API для получения полного профиля пользователя по Access токену.</li>
+</ul>
+
+<!-- ГЛАВА 11 -->
+<div class="page-break"></div>
+<h2 id="ch11">Глава 11. Внедрение OAuth 2.0 / OIDC в Spring Boot</h2>
+
+<h3>11.1. Сценарий 1: Spring Boot как OAuth2 Client (Вход через Keycloak / Google)</h3>
+<pre><code><span class="code-comment">// 1. Зависимость в build.gradle.kts</span>
+implementation(<span class="code-string">"org.springframework.boot:spring-boot-starter-oauth2-client"</span>)
+
+<span class="code-comment">// 2. Конфигурация application.yaml</span>
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: warehouse-client
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid, profile, email
+            redirect-uri: <span class="code-string">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
+        provider:
+          keycloak:
+            issuer-uri: https://auth.company.com/realms/warehouse-realm
+
+<span class="code-comment">// 3. Конфигурация SecurityFilterChain</span>
+<span class="code-annotation">@Bean</span>
+<span class="code-keyword">public</span> <span class="code-type">SecurityFilterChain</span> <span class="code-method">oauthClientFilterChain</span>(<span class="code-type">HttpSecurity</span> http) <span class="code-keyword">throws</span> <span class="code-type">Exception</span> {
+    <span class="code-keyword">return</span> http
+        .authorizeHttpRequests(auth -&gt; auth
+            .requestMatchers(<span class="code-string">"/"</span>, <span class="code-string">"/public/**"</span>).permitAll()
+            .anyRequest().authenticated()
+        )
+        .oauth2Login(<span class="code-type">Customizer</span>.withDefaults()) <span class="code-comment">// Автоматический редирект на Keycloak/Google</span>
+        .build();
+}</code></pre>
+
+<h3>11.2. Сценарий 2: Spring Boot как Resource Server (Валидация JWT от Keycloak)</h3>
+<pre><code><span class="code-comment">// 1. Зависимость в build.gradle.kts</span>
+implementation(<span class="code-string">"org.springframework.boot:spring-boot-starter-oauth2-resource-server"</span>)
+
+<span class="code-comment">// 2. Конфигурация application.yaml</span>
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          <span class="code-comment">// Spring автоматически скачает публичные ключи JWKS с эндпоинта issuer-uri</span>
+          issuer-uri: https://auth.company.com/realms/warehouse-realm
+
+<span class="code-comment">// 3. Конфигурация Resource Server</span>
+<span class="code-annotation">@Configuration</span>
+<span class="code-annotation">@EnableMethodSecurity</span>
+<span class="code-keyword">public class</span> <span class="code-type">ResourceServerConfig</span> {
+
+    <span class="code-annotation">@Bean</span>
+    <span class="code-keyword">public</span> <span class="code-type">SecurityFilterChain</span> <span class="code-method">resourceServerFilterChain</span>(<span class="code-type">HttpSecurity</span> http) <span class="code-keyword">throws</span> <span class="code-type">Exception</span> {
+        <span class="code-keyword">return</span> http
+            .csrf(<span class="code-type">AbstractHttpConfigurer</span>::disable)
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(<span class="code-type">SessionCreationPolicy</span>.STATELESS))
+            .authorizeHttpRequests(auth -&gt; auth
+                .requestMatchers(<span class="code-type">HttpMethod</span>.GET, <span class="code-string">"/api/v1/orders/**"</span>).hasAuthority(<span class="code-string">"SCOPE_orders.read"</span>)
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -&gt; oauth2
+                .jwt(jwt -&gt; jwt.jwtAuthenticationConverter(customJwtAuthenticationConverter()))
+            )
+            .build();
+    }
+
+    <span class="code-comment">// Конвертер ролей из Keycloak JSON claim "realm_access.roles" в Spring GrantedAuthority</span>
+    <span class="code-keyword">private</span> <span class="code-type">Converter</span>&lt;<span class="code-type">Jwt</span>, <span class="code-type">AbstractAuthenticationToken</span>&gt; <span class="code-method">customJwtAuthenticationConverter</span>() {
+        <span class="code-type">JwtAuthenticationConverter</span> converter = <span class="code-keyword">new</span> <span class="code-type">JwtAuthenticationConverter</span>();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -&gt; {
+            <span class="code-type">Map</span>&lt;<span class="code-type">String</span>, <span class="code-type">Object</span>&gt; realmAccess = jwt.getClaim(<span class="code-string">"realm_access"</span>);
+            <span class="code-keyword">if</span> (realmAccess == <span class="code-keyword">null</span> || !realmAccess.containsKey(<span class="code-string">"roles"</span>)) {
+                <span class="code-keyword">return</span> <span class="code-type">Collections</span>.emptyList();
+            }
+            <span class="code-type">List</span>&lt;<span class="code-type">String</span>&gt; roles = (<span class="code-type">List</span>&lt;<span class="code-type">String</span>&gt;) realmAccess.get(<span class="code-string">"roles"</span>);
+            <span class="code-keyword">return</span> roles.stream()
+                .map(role -&gt; <span class="code-keyword">new</span> <span class="code-type">SimpleGrantedAuthority</span>(<span class="code-string">"ROLE_"</span> + role))
+                .collect(<span class="code-type">Collectors</span>.toList());
+        });
+        <span class="code-keyword">return</span> converter;
+    }
+}</code></pre>
+
+<!-- ГЛАВА 12 -->
+<h2 id="ch12">Глава 12. Приложение: Промышленная архитектура безопасности</h2>
+<p>
+Ниже систематизированы паттерны того, как аутентификация и авторизация строятся в реальных коммерческих проектах в зависимости от масштаба системы.
+</p>
+
+<div class="diagram-box">
+    <svg width="100%" height="260" viewBox="0 0 740 260" xmlns="http://www.w3.org/2000/svg">
+        <!-- Client -->
+        <rect x="10" y="90" width="100" height="60" rx="5" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+        <text x="60" y="115" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">SPA Client</text>
+        <text x="60" y="132" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#64748b">React / Vue</text>
+
+        <path d="M 110 120 L 160 120" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+        <text x="135" y="112" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#0284c7">HTTPS Cookie</text>
+
+        <!-- API Gateway (BFF) -->
+        <rect x="165" y="45" width="180" height="150" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="255" y="70" text-anchor="middle" font-family="Segoe UI" font-size="11" font-weight="bold" fill="#0369a1">API Gateway (BFF)</text>
+        <text x="255" y="88" text-anchor="middle" font-family="Segoe UI" font-size="8.5" fill="#0f172a">Spring Cloud Gateway</text>
+        <text x="175" y="115" font-family="Segoe UI" font-size="7.5" fill="#334155">• Token Relay (Cookie -> JWT)</text>
+        <text x="175" y="130" font-family="Segoe UI" font-size="7.5" fill="#334155">• Rate Limiting (Redis)</text>
+        <text x="175" y="145" font-family="Segoe UI" font-size="7.5" fill="#334155">• SSL Termination</text>
+        <text x="175" y="160" font-family="Segoe UI" font-size="7.5" fill="#334155">• Session Management (Redis)</text>
+
+        <!-- IdP -->
+        <path d="M 255 45 L 255 20 L 450 20" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="455" y="10" width="130" height="40" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.2"/>
+        <text x="520" y="30" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#92400e">Keycloak / IdP</text>
+        <text x="520" y="42" text-anchor="middle" font-family="Segoe UI" font-size="7" fill="#b45309">OIDC / JWKS Provider</text>
+
+        <!-- Microservices -->
+        <path d="M 345 90 L 450 90" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="455" y="70" width="170" height="45" rx="4" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.2"/>
+        <text x="540" y="90" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#15803d">Order Service (Resource Server)</text>
+        <text x="540" y="105" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">Проверяет JWT по открытому ключу</text>
+
+        <path d="M 345 150 L 450 150" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="455" y="130" width="170" height="45" rx="4" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.2"/>
+        <text x="540" y="150" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#15803d">Warehouse Service</text>
+        <text x="540" y="165" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">Проверяет JWT по открытому ключу</text>
+
+        <!-- Kafka -->
+        <path d="M 540 175 L 540 210" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="455" y="210" width="170" height="40" rx="4" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.2"/>
+        <text x="540" y="228" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#3730a3">Apache Kafka Event Bus</text>
+        <text x="540" y="242" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#4f46e5">SASL/SCRAM или mTLS аутентификация</text>
+    </svg>
+    <div class="diagram-caption">Рис. 12.1. Эталонная архитектура безопасности Enterprise-системы (BFF + Gateway + Keycloak + Resource Servers)</div>
+</div>
+
+<h3>12.1. Сравнение промышленных подходов</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Архитектурный паттерн</th>
+            <th>Стек технологий</th>
+            <th>Плюсы</th>
+            <th>Минусы / Сложность</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>1. Монолит со Spring Session + Redis</strong></td>
+            <td>Spring Boot, Spring Session Data Redis, PostgreSQL, Thymeleaf / SPA.</td>
+            <td>Мгновенный отзыв сессии в Redis, простота отладки, нет возни с JWT-ключами.</td>
+            <td>Привязка к состоянию в Redis, сложность масштабирования на независимые мобильные/сторонние клиенты.</td>
+        </tr>
+        <tr>
+            <td><strong>2. Самописный JWT + Refresh (наш вариант)</strong></td>
+            <td>Spring Boot, JJWT, PostgreSQL / Redis (для Refresh Hash).</td>
+            <td>Полный контроль над кодом, нулевая внешняя инфраструктура (не нужен Keycloak).</td>
+            <td>Необходимо вручную поддерживать ротацию, защиту от Replay-атак и код фильтров.</td>
+        </tr>
+        <tr>
+            <td><strong>3. Enterprise OAuth 2.0 / OIDC + Keycloak</strong></td>
+            <td>Keycloak / Auth0, Spring OAuth2 Resource Server, Spring Cloud Gateway.</td>
+            <td>Единый вход (SSO), управление пользователями через админку, встроенный 2FA/TOTP/WebAuthn, аудит.</td>
+            <td>Тяжелая инфраструктура (Keycloak требует выделенных ресурсов и отдельного обслуживания).</td>
+        </tr>
+        <tr>
+            <td><strong>4. Backend-For-Frontend (BFF Pattern)</strong></td>
+            <td>SPA (React/Vue) $\leftrightarrow$ Spring Cloud Gateway (BFF) $\leftrightarrow$ Микросервисы.</td>
+            <td>Браузер хранит только безопасный <code>HttpOnly</code> cookie; Gateway меняет cookie на JWT и проксирует его в микросервисы.</td>
+            <td>Требует выделенного слоя шлюза и настройки Token Relay.</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="callout success">
+    <div class="callout-title">Резюме для инженера</div>
+    <p>
+        Безопасность — это не отдельная библиотека, а сквозной конвейер. Выбор между Basic Auth, JWT и OAuth 2.0 диктуется исключительно топологией системы. Для компактных сервисов оптимален JWT + Refresh Token; для корпоративных контуров с множеством клиентов и единой авторизацией — OAuth 2.0 / OIDC с выделенным сервером аутентификации (Keycloak).
+    </p>
+</div>
+
+<!-- ГЛАВА 13 -->
+<div class="page-break"></div>
+<h2 id="ch13">Глава 13. Руководство по работе с официальной документацией Spring и техническим английским (A2+/B1)</h2>
+<p>
+Умение самостоятельно и быстро находить проверенные архитектурные решения в первоисточниках — ключевое отличие профессионального инженера. Официальная документация Spring Framework (портал <code>docs.spring.io</code>) исчерпывающа, но требует понимания ее внутренней структуры.
+</p>
+
+<h3>13.1. Структура официального портала docs.spring.io</h3>
+<p>
+Главная ошибка начинающих — путаница между двумя главными разделами безопасности:
+</p>
+<table>
+    <thead>
+        <tr>
+            <th>Раздел документации</th>
+            <th>URL префикс</th>
+            <th>Вопрос, на который отвечает</th>
+            <th>Ключевые классы и темы</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Authentication (Аутентификация)</strong></td>
+            <td><code>/servlet/authentication/...</code></td>
+            <td><em>«Кто ты такой?»</em> (Проверка подлинности субъекта)</td>
+            <td><code>AuthenticationManager</code>, <code>AuthenticationProvider</code>, <code>DaoAuthenticationProvider</code>, <code>UserDetailsService</code>, <code>PasswordEncoder</code>, токены, логин/пароль.</td>
+        </tr>
+        <tr>
+            <td><strong>Authorization (Авторизация)</strong></td>
+            <td><code>/servlet/authorization/...</code></td>
+            <td><em>«Что тебе разрешено делать?»</em> (Контроль доступа)</td>
+            <td><code>AuthorizationManager</code>, <code>@PreAuthorize</code>, <code>@Secured</code>, <code>requestMatchers()</code>, роли, права доступа, HTTP 403 Forbidden.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>13.2. Типы источников: Javadoc vs Reference Guide vs Guides</h3>
+<ul>
+    <li><strong>Reference Documentation (Учебник и книга рецептов):</strong> Адрес <code>docs.spring.io/spring-security/reference/</code>. Содержит концептуальные схемы, описание работы фильтров и готовые фрагменты кода для конфигураций. Именно здесь нужно искать ответы на вопросы проектирования.</li>
+    <li><strong>API Javadoc (Синтаксический справочник):</strong> Содержит описания сигнатур отдельных классов, методов, типов параметров и исключений. Полезен, когда класс уже известен, но нужно уточнить назначение конкретного флага.</li>
+    <li><strong>Spring Guides (Пошаговые руководства):</strong> Портал <code>spring.io/guides</code> (например, <em>"Securing a Web Application"</em>). Содержит готовые законченные мини-проекты с репозиториями на GitHub.</li>
+</ul>
+
+<h3>13.3. Декомпилированный байткод в IDE vs Исходники с комментариями</h3>
+<p>
+При попытке заглянуть внутрь классов Spring через IDE (например, <code>AuthenticationConfiguration.java</code>) разработчик часто видит «сухой» декомпилированный код без комментариев.
+</p>
+<div class="callout warn">
+    <div class="callout-title">Как включить полноценную документацию прямо в IntelliJ IDEA</div>
+    <p>
+        1. Нажмите <strong>Ctrl + Q</strong> (на Windows/Linux) или <strong>F1</strong> над любым методом или классом — откроется окно <em>Quick Documentation</em> с отформатированным описанием и примерами кода.<br>
+        2. При открытии стороннего класса нажмите вверху желтой панели кнопку <strong>"Download Sources"</strong> (Скачать исходники). После этого декомпилированный байткод заменится на оригинальные файлы с подробными Javadoc-комментариями от архитекторов Spring.
+    </p>
+</div>
+
+<h3>13.4. Техника эффективного чтения документации на английском (уровень A2+/B1)</h3>
+<p>
+Технический английский в документации Spring предельно лаконичен, логичен и не содержит сложного сленга. Для комфортного чтения на уровне A2+/B1 рекомендуется применять 4-шаговый метод:
+</p>
+<ol>
+    <li><strong>Шаг 1 (Диаграммы и Код — 70% информации):</strong> Пролистайте страницу до диаграммы вызовов или блока с кодом Java/Kotlin. Названия классов и методов говорят сами за себя.</li>
+    <li><strong>Шаг 2 (Выделенные плашки Callouts):</strong> Ознакомьтесь с блоками <em>Tip</em> (лучшие практики), <em>Note</em> (важные нюансы) и <em>Warning / Deprecated</em> (устаревшие подходы).</li>
+    <li><strong>Шаг 3 (Чтение по первым предложениям):</strong> В англоязычной технической литературе главное утверждение всегда выносится в первое предложение абзаца (Topic Sentence). Если первое предложение не относится к вашей задаче — пропускайте весь абзац.</li>
+    <li><strong>Шаг 4 (Инструменты двуязычного перевода):</strong> Используйте расширения браузера (например, <em>Immersive Translate</em>), которые выводят русский перевод под оригинальным английским текстом, оставляя код и технические термины без искажений.</li>
+</ol>
+
+<h3>13.5. Микро-словарь ключевых терминов Spring Security</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Термин (Английский)</th>
+            <th>Русский эквивалент</th>
+            <th>Контекст употребления в Spring Security</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>delegate</strong></td><td>Делегировать / Передавать</td><td><em>Manager delegates authentication to a list of providers.</em></td></tr>
+        <tr><td><strong>intercept</strong></td><td>Перехватывать</td><td><em>Security filter intercepts incoming HTTP request before MVC dispatcher.</em></td></tr>
+        <tr><td><strong>invoke / trigger</strong></td><td>Вызывать / Запускать</td><td><em>AuthenticationEntryPoint is invoked when user is unauthenticated.</em></td></tr>
+        <tr><td><strong>expose</strong></td><td>Экспортировать / Публиковать</td><td><em>Expose AuthenticationManager as a Spring @Bean.</em></td></tr>
+        <tr><td><strong>override</strong></td><td>Переопределять</td><td><em>Override default security configuration.</em></td></tr>
+        <tr><td><strong>bypass</strong></td><td>Пропускать / Обходить</td><td><em>Static resources bypass security filter chain.</em></td></tr>
+        <tr><td><strong>validate / verify</strong></td><td>Проверять валидность</td><td><em>Verify JWT signature using public key.</em></td></tr>
+        <tr><td><strong>populate</strong></td><td>Заполнять данными</td><td><em>Populate SecurityContext with authenticated Principal.</em></td></tr>
+        <tr><td><strong>persist</strong></td><td>Сохранять в БД</td><td><em>Persist refresh token hash into PostgreSQL.</em></td></tr>
+        <tr><td><strong>extract</strong></td><td>Извлекать</td><td><em>Extract username claim from JWT payload.</em></td></tr>
+        <tr><td><strong>Principal</strong></td><td>Субъект безопасности</td><td>Объект текущего аутентифицированного пользователя (<code>UserDetails</code> / <code>AppPrincipal</code>).</td></tr>
+        <tr><td><strong>Credentials</strong></td><td>Реквизиты доступа</td><td>Секретные данные для подтверждения личности (пароль, токен, сертификат).</td></tr>
+        <tr><td><strong>Authority</strong></td><td>Полномочие / Право</td><td>Неделимое разрешение на действие (<code>UNITS_READ</code>, <code>ROLE_ADMIN</code>).</td></tr>
+        <tr><td><strong>Prerequisite</strong></td><td>Предварительное условие</td><td>Требования, которые должны быть выполнены до текущего шага.</td></tr>
+        <tr><td><strong>Stateless</strong></td><td>Без сохранения состояния</td><td>Сервер не хранит HTTP-сессии (актуально для JWT REST API).</td></tr>
+        <tr><td><strong>Downstream</strong></td><td>Ниже по конвейеру</td><td>Компоненты, вызываемые следующими в цепочке обработки запроса.</td></tr>
+    </tbody>
+</table>
+
+</body>
+</html>

@@ -2,7 +2,6 @@ package com.warehouse.demo.controller;
 
 import com.warehouse.demo.dto.request.CreateUnitRequest;
 import com.warehouse.demo.dto.request.UpdateUnitRequest;
-import com.warehouse.demo.dto.request.UpdateUserPasswordRequest;
 import com.warehouse.demo.dto.response.UnitListResponse;
 import com.warehouse.demo.dto.response.UnitResponse;
 import com.warehouse.demo.service.UnitService;
@@ -11,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/units")

@@ -38,3 +38,9 @@ logging:
   level:
     com.warehouse: DEBUG
     org.springframework.web: DEBUG
+
+app:
+  jwt:
+    secret: dGhpcy1pcy1hLXNlY3VyZS1zaWduaW5nLWtleS1mb3ItanNvbi13ZWItdG9rZW5zLTIwMjY=
+    token_expiration: 15m
+    refresh_expiration: 7d

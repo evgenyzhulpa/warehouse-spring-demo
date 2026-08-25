@@ -1,0 +1,32 @@
+---
+description: Снимок архитектуры warehouse-spring-demo (актуализировать при крупных сдвигах)
+alwaysApply: true
+---
+
+# Архитектура проекта (снимок: август 2026)
+
+Pet-проект складского учёта. Стек: **Java 17**, **Spring Boot 3.5.5**, Data JPA, Security, Validation, **Liquibase**, **MapStruct**, Lombok, **PostgreSQL 15** (Docker: `docker/docker-compose.yaml`), JJWT 0.13. Пакет `com.warehouse.demo`. Порт 8080. Hibernate `ddl-auto: none`.
+
+При сомнении **сканируй репозиторий**. Не доверяй старым чатам DeepSeek/Cursor.
+
+## Домен
+
+- `BaseEntity`: `id`, `created`/`updated`, soft-delete `deleted`, optimistic lock `version`.
+- `SystemEntity` extends BaseEntity: `systemDefined` (системные записи нельзя править как обычные).
+- Сущности: `Unit`, `User` (ФИО, username, passwordHash, enabled, many-to-many `Role`), `Role` (many-to-many `Permission`), `Permission` (`PermissionCode` enum), `RefreshToken`.
+- Права: `FULL_ACCESS`, `UNITS_READ/WRITE`, `USERS_READ/WRITE`, `ROLES_READ/WRITE`. Каталог прав на UI **только чтение**.
+- Эталон CRUD+права: **единицы измерения**. Раздел «Склад» — хаб с плейсхолдерами (поступление/реализация/списание, остатки/движение). Документов и номенклатуры пока нет. Куда расти — `project-roadmap`.
+
+## API и security
+
+Контроллеры: `/units`, `/users`, `/roles`, `/permissions`, `/login`. Метод-security `@PreAuthorize` (`READ`/`WRITE` + `FULL_ACCESS`). `/users/me` — текущий пользователь (для UI прав). Stateless JWT, CSRF/httpBasic выключены. Публично: `/`, `/index.html`, `/login/**`, статика.
+
+Логин `POST /login/auth` → access + refresh. Access ~15m, refresh ~7d, хеш refresh в БД. **Текущая работа:** дописать refresh (обмен, ротация/отзыв, logout). Эндпоинтов refresh/logout на снимок ещё нет — проверяй `AuthController`.
+
+## Фронтенд
+
+SPA без сборщика: `static/index.html` + `js/app.js` + `css/app.css` (Taxi). Логин-оверлей, вкладки, сайдбар, hash-роутинг `#/units/1`. После логина: `loadCurrentUser()` → `applyPermissionUi()`. Новая сущность с правами — чеклист в `entity-permissions-frontend`.
+
+## Слойность бэкенда
+
+`controller` → `service`/`impl` → `repository`; `dto/request|response`; `mapper`; `exception` (`BusinessLogicException`, `EntityNotFoundException` + `@RestControllerAdvice`). Миграции: `db/changelog/db.changelog-master.xml` (есть `include schema.sql`).

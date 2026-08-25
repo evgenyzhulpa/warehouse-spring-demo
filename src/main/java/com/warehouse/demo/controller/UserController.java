@@ -4,7 +4,6 @@ import com.warehouse.demo.dto.request.CreateUserRequest;
 import com.warehouse.demo.dto.request.UpdateUserPasswordRequest;
 import com.warehouse.demo.dto.request.UpdateUserRequest;
 import com.warehouse.demo.dto.response.CurrentUserResponse;
-import com.warehouse.demo.dto.response.UnitResponse;
 import com.warehouse.demo.dto.response.UserListResponse;
 import com.warehouse.demo.dto.response.UserResponse;
 import com.warehouse.demo.security.AppPrincipal;
@@ -15,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")

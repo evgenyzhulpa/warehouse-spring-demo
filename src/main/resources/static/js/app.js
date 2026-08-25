@@ -2,11 +2,18 @@
     'use strict';
 
     const API = {
+        login: '/login/auth',
+        refresh: '/login/refresh',
+        logout: '/login/logout',
         units: '/units',
         users: '/users',
         roles: '/roles',
         permissions: '/permissions',
     };
+
+    const ACCESS_TOKEN_KEY = 'auth_token';
+    const REFRESH_TOKEN_KEY = 'refresh_token';
+    let refreshInFlight = null;
 
     const SYSTEM_DEFINED_USERS = new Set(['admin']);
     const SYSTEM_DEFINED_ROLES = new Set(['Полные права']);
@@ -290,14 +297,76 @@
         return err;
     }
 
-    async function apiRequest(url, options = {}) {
-        const init = { method: options.method || 'GET', headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' }, ...options };
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-            init.headers['Authorization'] = 'Basic ' + token;
+    function getAccessToken() {
+        return localStorage.getItem(ACCESS_TOKEN_KEY);
+    }
+
+    function getRefreshToken() {
+        return localStorage.getItem(REFRESH_TOKEN_KEY);
+    }
+
+    function storeTokens(data) {
+        if (data.accessToken) localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+        if (data.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+    }
+
+    function clearTokens() {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
+
+    function authJsonHeaders() {
+        return {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+        };
+    }
+
+    async function refreshSession() {
+        if (refreshInFlight) return refreshInFlight;
+        refreshInFlight = (async () => {
+            const refreshToken = getRefreshToken();
+            if (!refreshToken) return false;
+            try {
+                const res = await fetch(API.refresh, {
+                    method: 'POST',
+                    headers: authJsonHeaders(),
+                    body: JSON.stringify({ refreshToken }),
+                });
+                if (!res.ok) return false;
+                const data = await res.json();
+                if (!data.accessToken || !data.refreshToken) return false;
+                storeTokens(data);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        })();
+        try {
+            return await refreshInFlight;
+        } finally {
+            refreshInFlight = null;
         }
+    }
+
+    async function apiRequest(url, options = {}) {
+        const init = {
+            method: options.method || 'GET',
+            ...options,
+            headers: { ...authJsonHeaders(), ...(options.headers || {}) },
+        };
+        const token = getAccessToken();
+        if (token) init.headers['Authorization'] = 'Bearer ' + token;
         if (init.body == null) delete init.body;
-        const res = await fetch(url, init);
+
+        let res = await fetch(url, init);
+        if (res.status === 401) {
+            const refreshed = await refreshSession();
+            if (refreshed) {
+                init.headers['Authorization'] = 'Bearer ' + getAccessToken();
+                res = await fetch(url, init);
+            }
+        }
         if (res.status === 401) {
             handleUnauthorized();
             throw createApiError(res.status, 'Необходима авторизация');
@@ -1407,7 +1476,7 @@
         els.validationNext?.addEventListener('click', () => showValidationErrorAt(validationIndex + 1, getCardRoot(activeCardEntity)?.querySelector('[data-role="body"]')));
 
         document.getElementById('btn-logout')?.addEventListener('click', () => {
-            handleUnauthorized();
+            logout();
         });
 
         document.addEventListener('click', (e) => {
@@ -1418,8 +1487,22 @@
         });
     }
 
+    async function logout() {
+        const refreshToken = getRefreshToken();
+        if (refreshToken) {
+            try {
+                await fetch(API.logout, {
+                    method: 'POST',
+                    headers: authJsonHeaders(),
+                    body: JSON.stringify({ refreshToken }),
+                });
+            } catch (e) { /* локальный выход всё равно выполняем */ }
+        }
+        handleUnauthorized();
+    }
+
     function handleUnauthorized() {
-        localStorage.removeItem('auth_token');
+        clearTokens();
         userPermissionCodes = new Set();
         currentUsername = '';
         const usernameEl = document.getElementById('header-username');
@@ -1437,14 +1520,12 @@
             e.preventDefault();
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
-            const token = btoa(unescape(encodeURIComponent(username + ':' + password)));
 
             try {
-                const res = await fetch(API.users + '/me', {
-                    headers: {
-                        'Authorization': 'Basic ' + token,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
+                const res = await fetch(API.login, {
+                    method: 'POST',
+                    headers: authJsonHeaders(),
+                    body: JSON.stringify({ username, password }),
                 });
 
                 if (res.status === 401) {
@@ -1459,7 +1540,14 @@
                     return;
                 }
 
-                localStorage.setItem('auth_token', token);
+                const data = await res.json();
+                if (!data.accessToken || !data.refreshToken) {
+                    loginError.textContent = 'Не удалось войти в систему';
+                    loginError.classList.remove('hidden');
+                    return;
+                }
+
+                storeTokens(data);
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('app-root').style.display = 'flex';
                 loginError.classList.add('hidden');
@@ -1471,7 +1559,7 @@
             }
         });
 
-        if (localStorage.getItem('auth_token')) {
+        if (getAccessToken() || getRefreshToken()) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-root').style.display = 'flex';
             initApp();

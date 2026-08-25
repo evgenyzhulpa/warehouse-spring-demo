@@ -15,5 +15,5 @@
     <include file="v1.0.2026.06/20260616-0001-role_permissions.xml" relativeToChangelogFile="true"/>
     <include file="v1.0.2026.06/20260618-0001-add-fullname-to-users.xml" relativeToChangelogFile="true"/>
     <include file="v1.0.2026.06/20260618-0002-add-system-defined-to-units.xml" relativeToChangelogFile="true"/>
-
+    <include file="v1.0.2026.08/20260805-0001-refresh_tokens.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

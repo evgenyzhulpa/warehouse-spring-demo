@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Spring Security — конспект для warehouse-spring-demo</title>
+<style>
+@page { size: A4; margin: 16mm 14mm 18mm; }
+:root { --blue:#174a7e; --light:#eef5fc; --line:#cbd8e6; --green:#e8f5e9; --warn:#fff5d6; --red:#fff0f0; }
+* { box-sizing:border-box; }
+body { font-family:"Segoe UI",Arial,sans-serif; line-height:1.48; color:#17212b; font-size:10.5pt; }
+h1,h2,h3,h4 { color:var(--blue); page-break-after:avoid; }
+h1 { font-size:26pt; line-height:1.15; margin:0 0 8mm; }
+h2 { font-size:18pt; border-bottom:2px solid #76a8d8; padding-bottom:2mm; margin:12mm 0 5mm; }
+h3 { font-size:14pt; margin:7mm 0 3mm; }
+h4 { font-size:11.5pt; margin:5mm 0 2mm; }
+p,li { orphans:3; widows:3; }
+code,pre { font-family:Consolas,"Courier New",monospace; font-size:8.4pt; }
+pre { white-space:pre-wrap; background:#17212b; color:#eef6ff; border-radius:4px; padding:4mm; overflow-wrap:anywhere; page-break-inside:avoid; }
+table { width:100%; border-collapse:collapse; margin:3mm 0 5mm; page-break-inside:avoid; }
+th,td { border:1px solid var(--line); padding:2.2mm; vertical-align:top; }
+th { background:var(--light); color:#163c66; text-align:left; }
+.cover { min-height:245mm; display:flex; flex-direction:column; justify-content:center; }
+.subtitle { color:#4b647b; font-size:14pt; }
+.meta { margin-top:18mm; padding:5mm; background:var(--light); border-left:5px solid var(--blue); }
+.toc { columns:2; column-gap:10mm; }
+.toc a { color:var(--blue); text-decoration:none; display:block; margin:1.2mm 0; }
+.box { padding:4mm; border-left:5px solid #4b84ba; background:var(--light); margin:4mm 0; page-break-inside:avoid; }
+.warning { background:var(--warn); border-left-color:#d69a00; }
+.danger { background:var(--red); border-left-color:#c34343; }
+.ok { background:var(--green); border-left-color:#398348; }
+.diagram { font-family:Consolas,"Courier New",monospace; white-space:pre-wrap; background:#f6f9fc; border:1px solid var(--line); padding:4mm; line-height:1.25; page-break-inside:avoid; }
+.pagebreak { page-break-before:always; }
+.small { font-size:9pt; color:#526372; }
+.status-done { color:#187233; font-weight:700; }
+.status-todo { color:#a05a00; font-weight:700; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+<h1>Spring Security<br>от первого фильтра до JWT, refresh и OAuth 2.0</h1>
+<p class="subtitle">Подробный учебный конспект для проекта <code>warehouse-spring-demo</code></p>
+<div class="meta">
+<p><b>Версия контекста:</b> август 2026. Java 17, Spring Boot 3.5.5, Spring Security 6, JJWT 0.13.0, PostgreSQL, Liquibase.</p>
+<p><b>Как читать:</b> сначала понять модель «завода», затем сверяться со схемами, потом смотреть алгоритм и код. Кодовые примеры привязаны к текущему репозиторию; refresh-обмен и logout на момент создания документа ещё не завершены.</p>
+</div>
+</section>
+
+<h2>Оглавление</h2>
+<nav class="toc">
+<a href="#why">1. Зачем веб-приложению безопасность</a>
+<a href="#terms">2. Словарь основных понятий</a>
+<a href="#web">3. HTTP, сервлеты, фильтры и Spring Security «из коробки»</a>
+<a href="#auth-types">4. Виды аутентификации и 2FA</a>
+<a href="#base">5. Базовая настройка Spring Security</a>
+<a href="#basic">6. HTTP Basic: теория и реализация</a>
+<a href="#jwt">7. JWT: теория и реализация</a>
+<a href="#refresh">8. JWT + refresh token</a>
+<a href="#oauth">9. OAuth 2.0</a>
+<a href="#oidc">10. OpenID Connect</a>
+<a href="#oauth-implementation">11. Как реализовать OAuth 2.0 / OIDC</a>
+<a href="#checklist">12. Шпаргалки и порядок действий</a>
+</nav>
+
+<h2 id="why">1. Зачем веб-приложению безопасность</h2>
+<p>Веб-приложение получает запросы из недоверенной среды: браузера пользователя, мобильного клиента, curl, Postman или программы злоумышленника. Нельзя считать, что кнопка, скрытая в интерфейсе, защищает сервер: запрос к <code>POST /units</code> можно отправить вручную. Защита должна жить на сервере.</p>
+
+<h3>Три базовые цели</h3>
+<table><tr><th>Цель</th><th>Простой вопрос</th><th>Пример в проекте</th></tr>
+<tr><td>Конфиденциальность</td><td>Кто не должен увидеть данные?</td><td>Пароль не возвращается из API; refresh в БД хранится только как hash.</td></tr>
+<tr><td>Целостность</td><td>Кто не должен изменить данные?</td><td>Пользователь с <code>UNITS_READ</code> не может создать единицу.</td></tr>
+<tr><td>Доступность</td><td>Кто не должен «уронить» сервис?</td><td>Ограничения запросов, защита от перебора паролей, разумные таймауты.</td></tr></table>
+
+<h3>Типичные угрозы</h3>
+<table><tr><th>Угроза</th><th>Что происходит</th><th>Базовая защита</th></tr>
+<tr><td>Кража пароля</td><td>Фишинг, утечка, повторное использование одного пароля.</td><td>BCrypt для hash пароля, HTTPS, короткий access, 2FA, ограничение попыток.</td></tr>
+<tr><td>Подбор пароля</td><td>Бот перебирает комбинации на логине.</td><td>Rate limit, временная блокировка, аудит, 2FA. Не выдавать слишком подробные ошибки.</td></tr>
+<tr><td>Подмена запроса</td><td>Клиент меняет ID или шлёт закрытый endpoint.</td><td><code>@PreAuthorize</code>, серверная проверка владельца/права, не доверять UI.</td></tr>
+<tr><td>XSS</td><td>Чужой JavaScript выполняется на странице и читает доступные ему данные.</td><td>Не вставлять HTML пользователя как HTML; CSP; осторожно с <code>localStorage</code>.</td></tr>
+<tr><td>CSRF</td><td>Чужой сайт заставляет браузер отправить запрос с его cookie.</td><td>CSRF-токен для cookie/session auth; для Bearer в заголовке риск другой.</td></tr>
+<tr><td>Утечка токена</td><td>Кто-то получил bearer/access или refresh.</td><td>HTTPS, короткий access, refresh rotation, logout/revoke, не логировать секреты.</td></tr>
+<tr><td>SQL injection</td><td>Ввод меняет смысл SQL.</td><td>JPA/параметризованные запросы, валидация; не собирать SQL конкатенацией.</td></tr></table>
+
+<div class="box warning"><b>HTTPS обязательно в реальном окружении.</b> Basic, JWT и refresh без HTTPS можно перехватить в сети. JWT не заменяет TLS: он защищает целостность самого билета, но не шифрует весь HTTP-трафик.</div>
+
+<h2 id="terms">2. Основные понятия</h2>
+<table><tr><th>Термин</th><th>Человеческий смысл</th><th>В нашем проекте</th></tr>
+<tr><td>Аутентификация (authentication)</td><td>Проверка «кто ты?».</td><td>Логин+пароль проверяются <code>AuthenticationManager</code>.</td></tr>
+<tr><td>Авторизация (authorization)</td><td>Проверка «что тебе можно?».</td><td><code>@PreAuthorize("hasAnyAuthority(...)")</code> на контроллере.</td></tr>
+<tr><td>Principal</td><td>Представление текущего пользователя для Security.</td><td><code>AppPrincipal</code>, содержащий <code>User</code>.</td></tr>
+<tr><td>Authentication</td><td>Объект Security: principal + credentials + authorities + флаг authenticated.</td><td>После JWT-фильтра лежит в <code>SecurityContext</code>.</td></tr>
+<tr><td>Authority</td><td>Одно конкретное разрешение.</td><td><code>UNITS_READ</code>, <code>USERS_WRITE</code>, <code>FULL_ACCESS</code>.</td></tr>
+<tr><td>Role</td><td>Группа разрешений; часто просто соглашение об именовании.</td><td>Сущность <code>Role</code> содержит набор <code>Permission</code>.</td></tr>
+<tr><td>GrantedAuthority</td><td>Интерфейс Spring, которым представляется authority.</td><td><code>Permission.authority()</code> даёт <code>SimpleGrantedAuthority</code>.</td></tr>
+<tr><td>SecurityContext</td><td>«Карман» текущего HTTP-запроса, где Spring хранит Authentication.</td><td>JWT-фильтр кладёт туда пользователя до контроллера.</td></tr>
+<tr><td>Session</td><td>Серверная память между запросами, обычно по cookie <code>JSESSIONID</code>.</td><td>У нас выключена: <code>STATELESS</code>.</td></tr>
+<tr><td>CSRF</td><td>Подделка запроса через автоматически отправляемые cookie.</td><td>В stateless Bearer API CSRF выключен осознанно; если перейти на cookie, решение надо пересмотреть.</td></tr></table>
+
+<h3>Role и authority: почему не одно и то же</h3>
+<p>Роль — удобное бизнесовое имя: «Кладовщик», «Администратор». Authority — атомарное действие: <code>UNITS_READ</code>. Можно дать двум разным ролям одно authority. В Spring выражение <code>hasRole("ADMIN")</code> обычно ищет authority <code>ROLE_ADMIN</code>; выражение <code>hasAuthority("UNITS_READ")</code> ищет строку буквально. Наш проект строится на конкретных permissions, поэтому <code>hasAnyAuthority</code> здесь правильнее, чем искусственно заменить всё на ADMIN.</p>
+
+<h2 id="web">3. Как работает Spring Security «из коробки»</h2>
+<h3>Что такое HTTP, servlet и filter</h3>
+<p>Браузер отправляет HTTP-запрос: метод, URL, заголовки, тело. В Spring Boot встроенный веб-сервер (обычно Tomcat) принимает его. <b>Servlet</b> — Java-объект, который умеет обработать HTTP-запрос. Spring MVC использует центральный servlet <code>DispatcherServlet</code>: он находит нужный метод контроллера.</p>
+<p><b>Filter</b> — объект, который запускается <i>до</i> servlet и может либо пропустить запрос дальше, либо остановить/изменить его. Это удобно для безопасности: аутентификация должна произойти до вызова контроллера.</p>
+
+<div class="diagram">Браузер / Postman
+        |
+        v
+Встроенный Tomcat
+        |
+        v
+SecurityFilterChain: [Filter 1] -> [Filter 2] -> ... -> [JWT filter]
+        |                                                    |
+        |                                 кладёт Authentication в SecurityContext
+        v
+DispatcherServlet -> Controller -> Service -> Repository -> PostgreSQL
+        |
+        v
+HTTP response</div>
+
+<h3>Что добавляет starter-security без настройки</h3>
+<p>Подключение <code>spring-boot-starter-security</code> добавляет фильтры безопасности. Если не написать собственную конфигурацию, Spring Boot обычно:</p>
+<ul><li>закрывает почти все URL;</li><li>создаёт временного пользователя и печатает пароль в лог;</li><li>включает form login / Basic в зависимости от запроса;</li><li>создаёт сессию после входа.</li></ul>
+<p>Это полезно как безопасный старт, но почти никогда не является готовой конфигурацией API. Мы заменяем поведение собственным <code>SecurityFilterChain</code>.</p>
+
+<h3>Два разных момента: login и обычный запрос</h3>
+<div class="diagram">LOGIN (один раз)                         API REQUEST (много раз)
+-----------------                        ------------------------
+логин + пароль                           Authorization: Bearer &lt;access&gt;
+      |                                               |
+AuthenticationManager                              JWT filter
+      |                                               |
+UserDetailsService + PasswordEncoder               JWTService: подпись + exp
+      |                                               |
+успех -> access/refresh                             UserDetailsService: права из БД
+                                                      |
+                                                SecurityContext -> Controller</div>
+
+<h2 id="auth-types">4. Виды аутентификации и 2FA</h2>
+<p>Факторы — это разные доказательства личности. Надёжная схема не обязана собирать все факторы; она выбирает их по риску и удобству.</p>
+<table><tr><th>Фактор</th><th>Что доказывает пользователь</th><th>Примеры</th><th>Слабые места</th></tr>
+<tr><td>Knowledge-based («знаю»)</td><td>Секрет, который должен знать только он.</td><td>Пароль, PIN, контрольный вопрос.</td><td>Фишинг, повторное использование, утечки, подбор.</td></tr>
+<tr><td>Possession-based («владею»)</td><td>Есть физический или цифровой предмет.</td><td>Телефон, аппаратный ключ FIDO2, карточка, приложение-аутентификатор.</td><td>Кража/потеря устройства, SIM-swap.</td></tr>
+<tr><td>Inherence («являюсь»)</td><td>Биометрический признак.</td><td>Отпечаток, Face ID.</td><td>Ошибки распознавания; биометрию нельзя «сменить» как пароль.</td></tr></table>
+
+<h3>Однофакторная и двухфакторная аутентификация</h3>
+<p><b>2FA</b> — минимум два <i>разных</i> фактора. Пароль и второй пароль — не 2FA: оба «что знаю». Пароль + код из приложения — 2FA: «знаю» + «владею телефоном».</p>
+
+<h4>SMS-код</h4>
+<p>Сервер после пароля создаёт одноразовый код с коротким TTL, отправляет SMS и ждёт подтверждение. Плюс — пользователь уже умеет пользоваться SMS. Минусы — стоимость, доставка, перехват/переоформление SIM, фишинг. Для высокой безопасности SMS хуже TOTP/FIDO2, но лучше одного пароля.</p>
+
+<h4>Google Authenticator и TOTP</h4>
+<p>Google Authenticator — один из клиентов протокола <b>TOTP</b> (Time-based One-Time Password). При включении 2FA сервер генерирует секрет и показывает QR-код. Приложение и сервер знают один секрет и одинаковое текущее время; оба считают короткий код, обычно меняющийся раз в 30 секунд. Сервер хранит секрет защищённо, не пароль от Google Authenticator.</p>
+<div class="box"><b>Важно:</b> Google Authenticator не «проверяет пользователя через Google». Это локальный генератор TOTP-кодов. Сервер сам проверяет код по общему секрету.</div>
+
+<h2 id="base">5. Базовая настройка Spring Security с нуля</h2>
+<h3>Минимальная модель данных</h3>
+<div class="diagram">User ---- many-to-many ---- Role ---- many-to-many ---- Permission
+ |                             |                                |
+ username, passwordHash         name                       code = UNITS_READ
+ enabled                                                        USERS_WRITE</div>
+<p>Пароль никогда не хранится как обычный текст. В базе — только медленный salted hash BCrypt. При логине Spring вызывает <code>passwordEncoder.matches(rawPassword, passwordHash)</code>.</p>
+
+<h3>Порядок создания</h3>
+<ol>
+<li>Добавить <code>spring-boot-starter-security</code>.</li>
+<li>Подготовить пользователя и permissions в БД.</li>
+<li>Написать <code>AppPrincipal implements UserDetails</code>.</li>
+<li>Написать <code>UserDetailsService</code>, который находит principal по username.</li>
+<li>Объявить <code>PasswordEncoder</code> (BCrypt) и <code>AuthenticationManager</code>.</li>
+<li>Написать <code>SecurityFilterChain</code>: публичные URL, защита остальных, session policy.</li>
+<li>Поставить <code>@PreAuthorize</code> на действия, а не только скрыть кнопку на UI.</li>
+</ol>
+
+<h3>Фрагмент нашего SecurityConfiguration</h3>
+<pre>@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfiguration {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
+                                           JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+        return httpSecurity
+            .csrf(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(a -&gt; a
+                .requestMatchers("/login/**", "/css/**", "/js/**", "/").permitAll()
+                .anyRequest().authenticated())
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+}</pre>
+<table><tr><th>Строка / тип</th><th>Зачем</th></tr>
+<tr><td><code>@Configuration</code></td><td>Говорит Spring: этот класс создаёт бины конфигурации.</td></tr>
+<tr><td><code>@EnableWebSecurity</code></td><td>Включает web security инфраструктуру.</td></tr>
+<tr><td><code>@EnableMethodSecurity</code></td><td>Включает <code>@PreAuthorize</code> на методах.</td></tr>
+<tr><td><code>@Bean PasswordEncoder</code></td><td>Один общий объект для hash и проверки пароля.</td></tr>
+<tr><td><code>BCryptPasswordEncoder(12)</code></td><td>12 — work factor: безопасность выше, проверка медленнее. Это намеренно.</td></tr>
+<tr><td><code>@Bean AuthenticationManager</code></td><td>Экспортирует менеджер наружу в Spring Context. Без этого бина контроллер не сможет его заинжектить (будет <code>NoSuchBeanDefinitionException</code>).</td></tr>
+<tr><td><code>AuthenticationConfiguration</code></td><td>Автоматически связывает наши бины <code>UserDetailsService</code> и <code>PasswordEncoder</code> в <code>DaoAuthenticationProvider</code> и отдаёт готовый <code>AuthenticationManager</code>.</td></tr>
+<tr><td><code>STATELESS</code></td><td>Не создавать/не читать HTTP session; каждый запрос несёт собственное доказательство.</td></tr>
+<tr><td><code>requestMatchers(...).permitAll()</code></td><td>Публичные пути, которые можно вызвать до входа.</td></tr>
+<tr><td><code>anyRequest().authenticated()</code></td><td>Без Authentication в SecurityContext дальше не пройти.</td></tr>
+<tr><td><code>addFilterBefore</code></td><td>Наш JWT-фильтр запускается до стандартного username/password фильтра.</td></tr></table>
+
+<div class="box ok">
+<b>Цепочка проверки подлинности (Запомнить наизусть):</b><br>
+<code>AuthenticationManager (ProviderManager)</code> ➔ <code>DaoAuthenticationProvider</code> ➔ <code>UserDetailsService.loadUserByUsername()</code> ➔ <code>PasswordEncoder.matches(raw, hash)</code> ➔ Возврат подтверждённого <code>Authentication</code> (Principal=AppPrincipal, Authorities=права, Credentials=null).
+</div>
+
+<div class="box warning">
+<b>Как искать в документации (docs.spring.io):</b><br>
+• Логин, пароли, токены, провайдеры — ищи в <code>/servlet/authentication/...</code> («Кто ты?»).<br>
+• Роли, права, @PreAuthorize, доступ к URL — ищи в <code>/servlet/authorization/...</code> («Что тебе можно?»).<br>
+• В IntelliJ IDEA: <code>Ctrl + Q</code> над классом или кнопка <b>Download Sources</b>, чтобы читать комментарии авторов вместо декомпилированного байткода.
+</div>
+
+<h2 id="basic">6. HTTP Basic</h2>
+<h3>Теория</h3>
+<p>HTTP Basic передаёт в каждом запросе заголовок <code>Authorization: Basic Base64(username:password)</code>. Base64 — <b>кодировка, не шифрование</b>: строку легко декодировать. Basic допустим только через HTTPS и подходит для простых API, service-to-service или учебного старта. Для SPA хранить пароль и прикладывать его к каждому запросу — плохая долгосрочная схема.</p>
+
+<h3>Схема Basic</h3>
+<div class="diagram">Browser: Authorization: Basic base64("admin:password")
+                     |
+                     v
+Spring BasicAuthenticationFilter
+                     |
+                     v
+AuthenticationManager
+        |                          |
+        v                          v
+UserDetailsService            PasswordEncoder.matches
+        |                          |
+        +----------- успех --------+
+                     |
+                     v
+SecurityContext -> @PreAuthorize -> Controller</div>
+
+<h3>Как внедрить с нуля</h3>
+<ol><li>Подключить Security starter.</li><li>Создать <code>UserDetails</code> и <code>UserDetailsService</code>.</li><li>Создать BCrypt PasswordEncoder.</li><li>В SecurityFilterChain включить <code>httpBasic(Customizer.withDefaults())</code>.</li><li>Для первого опыта отключить form login; выбрать session policy осознанно.</li><li>Поставить method security.</li><li>Проверить curl/Postman с Basic header.</li></ol>
+
+<h3>Ключевые объекты нашего проекта</h3>
+<pre>public class AppPrincipal implements UserDetails {
+    private final User user;
+
+    @Override
+    public Collection&lt;? extends GrantedAuthority&gt; getAuthorities() {
+        return user.getRoles().stream()
+            .flatMap(role -&gt; role.getPermissions().stream())
+            .map(Permission::authority)
+            .collect(Collectors.toSet());
+    }
+
+    @Override
+    public String getPassword() { return user.getPasswordHash(); }
+
+    @Override
+    public String getUsername() { return user.getUsername(); }
+}</pre>
+<table><tr><th>Фрагмент</th><th>Пояснение</th></tr>
+<tr><td><code>implements UserDetails</code></td><td>Адаптер между собственной сущностью <code>User</code> и контрактом Spring Security.</td></tr>
+<tr><td><code>Collection&lt;? extends GrantedAuthority&gt;</code></td><td>Список разрешений. <code>? extends</code> разрешает любой конкретный тип, реализующий интерфейс.</td></tr>
+<tr><td><code>flatMap</code></td><td>У пользователя много ролей, у каждой много permissions. flatMap превращает «список списков» в один поток permissions.</td></tr>
+<tr><td><code>map(Permission::authority)</code></td><td>Ссылка на метод: каждый Permission превращается в Spring-совместимый GrantedAuthority.</td></tr>
+<tr><td><code>getPassword()</code></td><td>Возвращает hash из БД, не сырой пароль. Spring использует его только для <code>matches</code>.</td></tr></table>
+
+<pre>@Service
+@RequiredArgsConstructor
+public class UserDetailsServiceImpl implements UserDetailsService {
+    private final UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -&gt; new UsernameNotFoundException("..."));
+        return new AppPrincipal(user);
+    }
+}</pre>
+<p><code>UserDetailsService</code> отвечает только на вопрос «найди пользователя по логину и отдай Security-представление». Он <b>не</b> сравнивает пароль вручную: это задача <code>AuthenticationManager</code> и <code>PasswordEncoder</code>.</p>
+
+<h2 id="jwt">7. JWT (JSON Web Token)</h2>
+<h3>Теория</h3>
+<p>JWT — компактный подписанный билет. Он обычно выглядит как три Base64URL-части: <code>header.payload.signature</code>. Это <b>не зашифрованный</b> контейнер: payload можно прочитать. Подпись доказывает, что header/payload выданы сервером и не изменены.</p>
+<div class="diagram">header:    { "alg": "HS256", "typ": "JWT" }
+payload:   { "sub": "admin", "iat": ..., "exp": ... }
+signature: HMAC-SHA256(base64url(header) + "." + base64url(payload), serverSecret)</div>
+
+<p>У нас симметричная подпись HMAC: один secret и создаёт, и проверяет подпись. Он живёт на сервере в <code>app.jwt.secret</code>. При проверке JJWT пересчитывает подпись тем же ключом и проверяет <code>exp</code>. Клиент ключ никогда не получает.</p>
+
+<h3>Схема JWT в нашем проекте</h3>
+<div class="diagram">POST /login/auth { username, password }
+  -> AuthenticationManager -> UserDetailsService + BCrypt
+  -> JWTService.generateToken(username)
+  -> { accessToken: "eyJ..." }
+
+GET /units/
+  Authorization: Bearer eyJ...
+  -> JWTAuthenticationFilter
+  -> JWTService.isTokenValid + extractUsername
+  -> UserDetailsService.loadUserByUsername
+  -> SecurityContextHolder.setAuthentication(...)
+  -> UnitController + @PreAuthorize</div>
+
+<h3>Алгоритм внедрения JWT</h3>
+<ol><li>Добавить три JJWT зависимости одной версии: api, impl, jackson.</li><li>Положить secret и срок access в конфиг (в проде — env/secret storage, не Git).</li><li>Создать <code>JWTService</code>: generate, parse, extract username, validate.</li><li>Создать filter, читающий <code>Authorization: Bearer</code>.</li><li>При валидном токене построить <code>Authentication</code> и положить в SecurityContext.</li><li>Создать контроллер логина через AuthenticationManager.</li><li>Отключить Basic, перейти на STATELESS, зарегистрировать фильтр.</li><li>Из фронта хранить access и прикладывать только к защищённым API.</li></ol>
+
+<h3>JWTService: разбор текущего кода</h3>
+<pre>public String generateToken(String username) {
+    Instant now = Instant.now();
+    return Jwts.builder()
+        .subject(username)
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(now.plus(tokenExpiration)))
+        .signWith(signingKey())
+        .compact();
+}</pre>
+<table><tr><th>Строка</th><th>Смысл</th></tr>
+<tr><td><code>Instant now</code></td><td>Текущий момент по UTC; удобен для времени безопасности.</td></tr>
+<tr><td><code>Jwts.builder()</code></td><td>Builder JJWT: собирает claims и подпись пошагово.</td></tr>
+<tr><td><code>subject(username)</code></td><td>Стандартный claim <code>sub</code> — идентификатор пользователя.</td></tr>
+<tr><td><code>issuedAt</code></td><td><code>iat</code>, время создания билета.</td></tr>
+<tr><td><code>expiration</code></td><td><code>exp</code>; после него билет недействителен.</td></tr>
+<tr><td><code>signWith</code></td><td>Ставит криптографическую подпись ключом сервера.</td></tr>
+<tr><td><code>compact()</code></td><td>Финально сериализует JWT в строку.</td></tr></table>
+
+<h3>JWT filter: суть</h3>
+<pre>String header = request.getHeader("Authorization");
+if (header == null || !header.startsWith("Bearer ")) {
+    filterChain.doFilter(request, response);
+    return;
+}
+String token = header.substring("Bearer ".length()).trim();
+if (SecurityContextHolder.getContext().getAuthentication() == null
+        && jwtService.isTokenValid(token)) {
+    String username = jwtService.extractUsername(token);
+    UserDetails user = userDetailsService.loadUserByUsername(username);
+    var auth = new UsernamePasswordAuthenticationToken(
+        user, null, user.getAuthorities());
+    SecurityContextHolder.getContext().setAuthentication(auth);
+}
+filterChain.doFilter(request, response);</pre>
+<p>Нет Bearer — фильтр не является ошибкой сам по себе: публичный endpoint может работать. Но защищённый endpoint позднее увидит пустой SecurityContext и ответит 401. Три аргумента в <code>UsernamePasswordAuthenticationToken</code> означают «пользователь уже аутентифицирован»; второй аргумент <code>null</code> — пароль здесь не нужен и не должен жить в контексте.</p>
+
+<h2 id="refresh">8. JWT + refresh token</h2>
+<h3>Зачем нужна пара</h3>
+<table><tr><th></th><th>Access</th><th>Refresh</th></tr>
+<tr><td>Назначение</td><td>Ходить к API.</td><td>Получить новую пару без пароля.</td></tr>
+<tr><td>Срок у нас</td><td>15 минут.</td><td>7 дней.</td></tr>
+<tr><td>Вид</td><td>Подписанный JWT.</td><td>Случайный UUID.</td></tr>
+<tr><td>Где проверяется</td><td>Подпись + срок в JWT filter.</td><td>Запись в PostgreSQL: hash, expiry, revoked.</td></tr>
+<tr><td>Куда посылается</td><td>Каждый защищённый запрос.</td><td>Только <code>/login/refresh</code>.</td></tr></table>
+
+<h3>Аналогия завода</h3>
+<p>Access — сменный пропуск на турникет, действующий 15 минут. Refresh — талон в бюро пропусков на неделю. Турникет не принимает талон; бюро не требует паспорт, пока талон жив. В журнале бюро фиксируется, какой талон кому выдали и не сдан ли он. Logout — сдать талон; текущий пропуск максимум 15 минут ещё может быть действителен, но новый уже не выдадут.</p>
+
+<h3>Полный алгоритм</h3>
+<div class="diagram">1. Login: пароль -> access JWT + raw refresh UUID
+2. БД: SHA-256(raw refresh), user, expiresAt, revoked=false
+3. API: только Bearer access
+4. Access expired: POST /login/refresh { refreshToken: raw }
+5. БД: hash -> find -> !revoked -> !expired
+6. Rotation: old.revoked=true; create new refresh; create new access
+7. Клиент заменяет обе строки
+8. Logout: revoke refresh (или все refresh пользователя) + очистить клиент</div>
+
+<h3>Почему SHA-256 для refresh и BCrypt для пароля</h3>
+<p>У пароля известен пользователь: можно взять его hash из записи и спросить BCrypt <code>matches(raw, hash)</code>. У сырого refresh сначала нужно найти, <i>какая</i> строка ему соответствует. BCrypt от одной строки каждый раз выдаёт другой результат из-за соли, поэтому <code>findByTokenHash(passwordEncoder.encode(raw))</code> не найдёт запись. SHA-256 детерминирован: один raw всегда даёт один hex hash, который можно индексировать и искать.</p>
+
+<h3>Состояние текущего проекта</h3>
+<table><tr><th>Шаг</th><th>Статус</th><th>Факт</th></tr>
+<tr><td>A. Конфиг</td><td class="status-done">Готово</td><td><code>token_expiration: 15m</code>, <code>refresh_expiration: 7d</code>.</td></tr>
+<tr><td>B. Таблица/entity/repository</td><td class="status-done">Готово</td><td><code>refresh_tokens</code>, <code>RefreshToken</code>, <code>findByTokenHash</code>.</td></tr>
+<tr><td>C. Выдача при login</td><td class="status-done">Готово</td><td><code>AuthController</code> выдаёт <code>LoginResponse(accessToken, refreshToken)</code>.</td></tr>
+<tr><td>D. Exchange + rotation</td><td class="status-todo">Надо сделать</td><td><code>POST /login/refresh</code>, 401 на плохой token, revoke старого, новая пара.</td></tr>
+<tr><td>E. Public URL</td><td class="status-done">Уже покрыто</td><td><code>/login/**</code> в <code>permitAll</code>.</td></tr>
+<tr><td>F. Frontend retry</td><td class="status-todo">Надо сделать после D</td><td>JS пока ждёт <code>data.token</code>, а бэк возвращает <code>accessToken</code>.</td></tr>
+<tr><td>Logout</td><td class="status-todo">Надо сделать</td><td>Отзыв refresh в БД и очистка токенов в браузере.</td></tr></table>
+
+<h3>Как дописать D: refresh endpoint</h3>
+<ol><li>Создать <code>RefreshRequest(@NotBlank String refreshToken)</code>.</li><li>Создать exception, который в advice отдаёт 401 одинаково для not found/revoked/expired.</li><li>В сервисе пометить метод <code>@Transactional</code>.</li><li>Посчитать SHA-256 raw, найти строку по <code>findByTokenHash</code>.</li><li>Проверить <code>revoked</code> и <code>expiresAt</code>.</li><li>Поставить старому <code>revoked=true</code>.</li><li>Создать новый refresh через существующий <code>createRefreshToken(username)</code>.</li><li>Создать access через <code>JWTService.generateToken(username)</code>.</li><li>Вернуть <code>LoginResponse</code>.</li><li>Проверить Postman: login → refresh → повтор старого refresh = 401.</li></ol>
+
+<h3>Redis для refresh: «круче» ли?</h3>
+<p>Нет, не «круче», а другой storage. Redis хорош для очень быстрых короткоживущих записей и умеет TTL. PostgreSQL лучше подходит текущему учебному проекту: уже есть Liquibase, запись переживает рестарт Redis, видно историю и <code>revoked</code>. Сначала закрыть протокол на Postgres. Redis имеет смысл позже при реальной нагрузке или отдельной учебной цели.</p>
+
+<h2 id="oauth">9. OAuth 2.0</h2>
+<h3>Что это и чем не является</h3>
+<p>OAuth 2.0 — протокол <b>делегирования доступа</b>. Он отвечает на вопрос: «может ли приложение получить ограниченный доступ к ресурсу пользователя, не узнавая его пароль?» Сам OAuth не равен JWT, не равен login и не гарантирует, что вы знаете имя человека.</p>
+<p>Пример: сайт-планировщик просит доступ к Google Calendar. Пароль Google вводится только на стороне Google. Планировщик получает access token с scope «читать календарь», но не пароль.</p>
+
+<h3>Участники</h3>
+<table><tr><th>Роль</th><th>Смысл</th><th>Пример</th></tr>
+<tr><td>Resource owner</td><td>Владелец данных.</td><td>Пользователь Google.</td></tr>
+<tr><td>Client</td><td>Приложение, которое просит доступ.</td><td>Наш web-app.</td></tr>
+<tr><td>Authorization server</td><td>Показывает login/consent и выдаёт tokens.</td><td>Google, Keycloak, GitHub.</td></tr>
+<tr><td>Resource server</td><td>API с защищёнными данными.</td><td>Google Calendar API или наш API.</td></tr>
+<tr><td>Scope</td><td>Граница разрешения для токена.</td><td><code>calendar.readonly</code>.</td></tr></table>
+
+<h3>Authorization Code + PKCE — современный поток для браузера</h3>
+<div class="diagram">1. Client -> Authorization Server: /authorize?client_id&redirect_uri&scope&code_challenge
+2. User логинится у провайдера и подтверждает consent
+3. Authorization Server -> redirect_uri?code=ONE_TIME_CODE
+4. Client -> /token: code + code_verifier
+5. Authorization Server -> access token (+ ID token при OIDC, возможно refresh)
+6. Client -> Resource Server: Bearer access token</div>
+<p><b>PKCE</b> защищает код авторизации от перехвата. Клиент заранее создаёт случайный <code>code_verifier</code>, в /authorize отправляет только его производный <code>code_challenge</code>, а на /token раскрывает verifier. Украденный code без verifier обменять нельзя.</p>
+
+<h3>Другие grant type</h3>
+<table><tr><th>Grant</th><th>Когда</th><th>Нюанс</th></tr>
+<tr><td>Authorization code + PKCE</td><td>Пользователь входит в web/mobile.</td><td>Основной рекомендуемый поток.</td></tr>
+<tr><td>Client credentials</td><td>Сервис вызывает сервис от своего имени.</td><td>Нет пользователя и его login.</td></tr>
+<tr><td>Refresh token</td><td>Продлить делегированный доступ.</td><td>Не путать с самописным refresh, хотя идея похожа.</td></tr>
+<tr><td>Device authorization</td><td>Устройство без удобной клавиатуры.</td><td>Телевизор, CLI, терминал.</td></tr></table>
+<div class="box danger"><b>Не используй Password Grant.</b> Старый поток, где client получает пароль пользователя, противоречит главной идее OAuth и не рекомендуется для новых приложений.</div>
+
+<h2 id="oidc">10. OpenID Connect (OIDC)</h2>
+<p>Название «OpenID» в современном Java/Spring контексте почти всегда означает <b>OpenID Connect</b> (OIDC), слой идентификации поверх OAuth 2.0. OAuth говорит: «вот ограниченный доступ к API». OIDC добавляет: «вот проверяемое утверждение, кто пользователь».</p>
+
+<h3>ID token</h3>
+<p>OIDC выдаёт <b>ID token</b>, обычно JWT. Он адресован <i>клиентскому приложению</i>, а не ресурсному API. В нём встречаются claims <code>iss</code> (кто выдал), <code>aud</code> (для какого client_id), <code>sub</code> (стабильный ID пользователя), <code>exp</code>, <code>nonce</code>, иногда name/email.</p>
+<div class="box warning"><b>Access token и ID token не взаимозаменяемы.</b> API должен принимать access token, а frontend использует ID token/claims для сведений о вошедшем пользователе. Нельзя послать ID token в защищённый API «потому что это JWT».</div>
+
+<h3>Discovery и JWKS</h3>
+<p>Провайдер OIDC публикует <code>/.well-known/openid-configuration</code>: URL /authorize, /token, issuer, JWKS URI и поддерживаемые scopes. Через JWKS ресурсный сервер получает публичные ключи провайдера для проверки асимметричных подписей. Это отличается от нашего HMAC: у нас один секрет знают обе стороны; у OIDC private key остаётся у провайдера, а проверяющие получают public key.</p>
+
+<h2 id="oauth-implementation">11. Как реализовать OAuth 2.0 / OIDC в Spring</h2>
+<h3>Сначала выбрать роль приложения</h3>
+<table><tr><th>Наша роль</th><th>Spring starter</th><th>Когда</th></tr>
+<tr><td>OAuth2 Client</td><td><code>spring-boot-starter-oauth2-client</code></td><td>«Войти через Google/Keycloak».</td></tr>
+<tr><td>Resource Server</td><td><code>spring-boot-starter-oauth2-resource-server</code></td><td>Наш API принимает access tokens внешнего issuer.</td></tr>
+<tr><td>Authorization Server</td><td>Spring Authorization Server или Keycloak</td><td>Мы сами выдаём OAuth tokens многим клиентам. Отдельная большая задача.</td></tr></table>
+
+<h3>Вариант 1: Login через Keycloak / Google (OAuth2 Client + OIDC)</h3>
+<ol><li>Зарегистрировать client у провайдера; получить <code>client-id</code>, redirect URI и (если confidential client) secret.</li><li>Добавить oauth2-client starter.</li><li>Добавить <code>spring.security.oauth2.client.registration</code> в yaml.</li><li>Разрешить <code>/oauth2/**</code> и <code>/login/**</code>.</li><li>Включить <code>oauth2Login</code>.</li><li>После успеха сопоставить внешний <code>issuer + sub</code> с внутренним User и его permissions.</li><li>Решить, как наш SPA получает сессию/собственный access; не смешивать случайно external ID token и API token.</li></ol>
+
+<pre>dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+}
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: warehouse-web
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            scope: openid, profile
+        provider:
+          keycloak:
+            issuer-uri: https://id.example.com/realms/warehouse</pre>
+<p><code>scope: openid</code> переключает OAuth-клиента в OIDC-режим. <code>issuer-uri</code> позволяет Spring найти discovery-документ сам. Секреты не коммитятся в <code>application.yaml</code>.</p>
+
+<h3>Вариант 2: наш API — Resource Server</h3>
+<ol><li>Добавить resource-server starter.</li><li>Настроить <code>issuer-uri</code> провайдера.</li><li>Заменить самописный JWT filter на <code>oauth2ResourceServer(o -&gt; o.jwt())</code> после отдельного изучения migration.</li><li>Настроить converter claims/scopes внешнего token в наши <code>GrantedAuthority</code>.</li><li>Оставить бизнес-проверки на уровне метода/сервиса.</li></ol>
+
+<pre>spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://id.example.com/realms/warehouse
+
+http.oauth2ResourceServer(oauth2 -&gt; oauth2.jwt());</pre>
+
+<h3>Что выбрать этому проекту сейчас</h3>
+<p>Ничего из OAuth/OIDC пока не внедрять поверх незавершённого refresh. У нас один SPA, один backend, свои пользователи и permissions. Самописный login+JWT — учебно оправдан. OAuth/OIDC стоит брать отдельной темой после security-конспекта: например, Keycloak как внешний IdP и сценарий SSO. Распиливать auth в микросервис или поднимать Authorization Server «для галочки» не нужно.</p>
+
+<h2 id="checklist">12. Шпаргалки</h2>
+<h3>Что сказать себе утром перед работой</h3>
+<div class="box ok"><b>Формула:</b> Login проверяет пароль и выдаёт билет. Обычный запрос проверяет билет и наполняет SecurityContext. Авторизация смотрит authorities. Refresh не ходит к API: он меняет старый длинный талон на новую пару билетов.</div>
+
+<h3>Чеклист: добавить защищённую сущность</h3>
+<ol><li>Добавить коды permissions в enum и данные миграцией.</li><li>Убедиться, что <code>AppPrincipal.getAuthorities()</code> получает эти permissions через роли.</li><li>Поставить <code>@PreAuthorize</code> на read/write методы.</li><li>Проверить 401 без access, 403/доступ с разными authorities.</li><li>Доработать фронтенд-права по правилу проекта; UI — удобство, сервер — реальная защита.</li></ol>
+
+<h3>Чеклист: закончить refresh</h3>
+<ol><li>DTO RefreshRequest.</li><li>Единая 401 ошибка для invalid/revoked/expired refresh.</li><li>Transactional validate + revoke old + create new.</li><li><code>POST /login/refresh</code>.</li><li>Postman rotation test.</li><li>Frontend: <code>accessToken</code> и <code>refreshToken</code>; один retry на 401.</li><li>Logout revoke + очистка storage.</li><li>Тесты auth/refresh.</li></ol>
+
+<h3>Никогда не делать</h3>
+<ul><li>Не класть сырой пароль, JWT secret, client secret или сырой refresh в Git, логи и exception message.</li><li>Не считать Base64 шифрованием.</li><li>Не доверять скрытой кнопке как проверке права.</li><li>Не использовать ID token вместо access token в API.</li><li>Не отключать CSRF «на всякий случай» при переходе на cookie/session auth.</li><li>Не превращать OAuth в задачу «сделать JWT посложнее»: это разные уровни.</li></ul>
+
+<p class="small">Конец конспекта. Актуализируй разделы 8 и 12 после завершения refresh/logout и перед внедрением OAuth/OIDC.</p>
+</body>
+</html>

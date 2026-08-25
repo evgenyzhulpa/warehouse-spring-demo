@@ -1,7 +1,6 @@
 package com.warehouse.demo.security;
 
 import com.warehouse.demo.model.Permission;
-import com.warehouse.demo.model.Role;
 import com.warehouse.demo.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
