@@ -1,6 +1,7 @@
 package com.warehouse.demo.service.impl;
 
-import com.warehouse.demo.dto.request.UpsertRoleRequest;
+import com.warehouse.demo.dto.request.CreateRoleRequest;
+import com.warehouse.demo.dto.request.UpdateRoleRequest;
 import com.warehouse.demo.dto.response.RoleListResponse;
 import com.warehouse.demo.dto.response.RoleResponse;
 import com.warehouse.demo.exception.BusinessLogicException;
@@ -11,13 +12,14 @@ import com.warehouse.demo.model.Role;
 import com.warehouse.demo.repository.PermissionRepository;
 import com.warehouse.demo.repository.RoleRepository;
 import com.warehouse.demo.service.RoleService;
-import com.warehouse.demo.utils.BeanUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -49,24 +51,74 @@ public class RoleServiceImpl implements RoleService {
 
     @Transactional
     @Override
-    public RoleResponse save(UpsertRoleRequest upsertRoleRequest) {
-        Role newRole = new Role();
-        newRole.setName(upsertRoleRequest.name());
-        List<Permission> permissions = permissionRepository.findAllById(
-                upsertRoleRequest.permissionsIdentifiers());
+    public RoleResponse save(CreateRoleRequest createRoleRequest) {
+        Role newRole = roleMapper.createRoleRequestToRole(createRoleRequest);
+        Set<Permission> permissions = findPermissionsById(
+                createRoleRequest.permissionsIdentifiers());
         newRole.setPermissions(permissions);
         return roleMapper.roleToRoleResponse(roleRepository.save(newRole));
     }
 
+    private Set<Permission> findPermissionsById(List<Long> permissionsIdentifiers) {
+
+        Set<Permission> permissions = new HashSet<>(
+                permissionRepository.findAllById(permissionsIdentifiers));
+        if (permissionsIdentifiers.size() == permissions.size()) {
+            return permissions;
+        }
+
+        List<Long> foundIds = permissions
+                .stream()
+                .map(Permission::getId)
+                .toList();
+
+        List<Long> missingIds = permissionsIdentifiers
+                .stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        throw new EntityNotFoundException(
+                MessageFormat.format("Не удалось найти права c id: {0}", missingIds));
+    }
+
     @Transactional
     @Override
-    public RoleResponse update(Long id, UpsertRoleRequest upsertRoleRequest) {
+    public RoleResponse update(Long id, UpdateRoleRequest updateRoleRequest) {
         Role existingRole = findRoleById(id);
         if (existingRole.getSystemDefined()) {
             throw new BusinessLogicException("Редактирование предопределенных ролей запрещено");
         }
-        BeanUtils.copyNonNullProperties(upsertRoleRequest, existingRole);
+
+        roleMapper.updateRoleFromUpdateRoleRequest(updateRoleRequest, existingRole);
+
+        List<Long> permissionsIdentifiers = updateRoleRequest.permissionsIdentifiers();
+        if (permissionsIdentifiers != null) {
+            Set<Permission> permissions = findPermissionsById(permissionsIdentifiers);
+            existingRole.setPermissions(permissions);
+        }
+
         return roleMapper.roleToRoleResponse(roleRepository.save(existingRole));
+    }
+
+    @Transactional
+    @Override
+    public RoleResponse markAsDeleted(Long id) {
+        return setDeletedValue(id, true);
+    }
+
+    private RoleResponse setDeletedValue(Long id, boolean isDeleted) {
+        Role existingRole = findRoleById(id);
+        if (isDeleted && existingRole.getSystemDefined()) {
+            throw new BusinessLogicException("Редактирование предопределенных ролей запрещено");
+        }
+        existingRole.setDeleted(isDeleted);
+        return roleMapper.roleToRoleResponse(roleRepository.save(existingRole));
+    }
+
+    @Transactional
+    @Override
+    public RoleResponse unmarkAsDeleted(Long id) {
+        return setDeletedValue(id, false);
     }
 
     @Transactional
@@ -76,7 +128,6 @@ public class RoleServiceImpl implements RoleService {
         if (existingRole.getSystemDefined()) {
             throw new BusinessLogicException("Удаление предопределенных ролей запрещено");
         }
-        existingRole.setDeleted(true);
-        roleMapper.roleToRoleResponse(roleRepository.save(existingRole));
+        roleRepository.delete(existingRole);
     }
 }

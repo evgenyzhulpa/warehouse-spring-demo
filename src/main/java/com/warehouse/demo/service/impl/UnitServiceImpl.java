@@ -1,14 +1,15 @@
 package com.warehouse.demo.service.impl;
 
-import com.warehouse.demo.dto.request.UpsertUnitRequest;
+import com.warehouse.demo.dto.request.CreateUnitRequest;
+import com.warehouse.demo.dto.request.UpdateUnitRequest;
 import com.warehouse.demo.dto.response.UnitListResponse;
 import com.warehouse.demo.dto.response.UnitResponse;
+import com.warehouse.demo.exception.BusinessLogicException;
 import com.warehouse.demo.exception.EntityNotFoundException;
 import com.warehouse.demo.mapper.UnitMapper;
 import com.warehouse.demo.model.Unit;
 import com.warehouse.demo.repository.UnitRepository;
 import com.warehouse.demo.service.UnitService;
-import com.warehouse.demo.utils.BeanUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,24 +45,50 @@ public class UnitServiceImpl implements UnitService {
 
     @Transactional
     @Override
-    public UnitResponse save(UpsertUnitRequest upsertUnitRequest) {
-        Unit newUnit = unitRepository.save(unitMapper.upsertUnitRequestToUnit(upsertUnitRequest));
+    public UnitResponse save(CreateUnitRequest createUnitRequest) {
+        Unit newUnit = unitRepository.save(unitMapper.createUnitRequestToUnit(createUnitRequest));
         return unitMapper.unitToUnitResponse(newUnit);
     }
 
     @Transactional
     @Override
-    public UnitResponse update(Long id, UpsertUnitRequest upsertUnitRequest) {
+    public UnitResponse update(Long id, UpdateUnitRequest updateUnitRequest) {
         Unit existingUnit = findUnitById(id);
-        BeanUtils.copyNonNullProperties(upsertUnitRequest, existingUnit);
+        if (existingUnit.getSystemDefined()) {
+            throw new BusinessLogicException("Редактирование предопределенных единиц измерения запрещено");
+        }
+        unitMapper.updateUnitFromUpdateUnitRequest(updateUnitRequest, existingUnit);
         return unitMapper.unitToUnitResponse(unitRepository.save(existingUnit));
+    }
+
+    @Transactional
+    @Override
+    public UnitResponse markAsDeleted(Long id) {
+        return setDeletedValue(id, true);
+    }
+
+    private UnitResponse setDeletedValue(Long id, boolean isDeleted) {
+        Unit existingUnit = findUnitById(id);
+        if (isDeleted && existingUnit.getSystemDefined()) {
+            throw new BusinessLogicException("Редактирование предопределенных единиц измерения запрещено");
+        }
+        existingUnit.setDeleted(isDeleted);
+        return unitMapper.unitToUnitResponse(unitRepository.save(existingUnit));
+    }
+
+    @Transactional
+    @Override
+    public UnitResponse unmarkAsDeleted(Long id) {
+        return setDeletedValue(id, false);
     }
 
     @Transactional
     @Override
     public void delete(Long id) {
         Unit existingUnit = findUnitById(id);
-        existingUnit.setDeleted(true);
-        unitMapper.unitToUnitResponse(unitRepository.save(existingUnit));
+        if (existingUnit.getSystemDefined()) {
+            throw new BusinessLogicException("Удаление предопределенных единиц измерения запрещено");
+        }
+        unitRepository.delete(existingUnit);
     }
 }

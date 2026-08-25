@@ -3,7 +3,8 @@ package com.warehouse.demo.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @NoArgsConstructor
 @Getter
@@ -22,6 +23,7 @@ public class Role extends SystemEntity {
         joinColumns = {@JoinColumn(name = "role_id")},
         inverseJoinColumns = {@JoinColumn(name = "permission_id")})
     @ToString.Exclude
-    private List<Permission> permissions;
+    private Set<Permission> permissions = new HashSet<>();
+
 }
 

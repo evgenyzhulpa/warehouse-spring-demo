@@ -1,0 +1,37 @@
+---
+description: Глобальный план этапов (текст DeepSeek) и факт по коду на август 2026
+alwaysApply: true
+---
+
+# Дорожная карта
+
+Текст этапов пользователь скопировал из [шары DeepSeek](https://chat.deepseek.com/share/ao20dmtrjgxq99bmvu) (24.08.2026). Это **север**, не ТЗ. Имена из шары не копировать в код, если в репо уже иначе.
+
+**Сейчас:** конец этапа 0. Refresh **не дописан** (логин выдаёт пару токенов; обмена и logout нет). Дальше по запросу: добить refresh → конспекты Security (`learning-workflow`) → этап 2. Не стартуй НСИ/документы сам.
+
+## Шарa vs репозиторий
+
+Шара: `Product`, `/api/...`, `hasRole('ADMIN')`, Liquibase, MapStruct, публичная регистрация, logout уже [x].  
+Код: `Unit`, без `/api`, `hasAnyAuthority('UNITS_READ'|…|'FULL_ACCESS')`, **Liquibase**, **MapStruct**, пользователей создаёт админ, **logout нет**. Смена пароля уже есть: `PATCH /users/{id}/change-password`, не `/api/users/change-password`.
+
+## Этапы
+
+**0. База (в основном готово).** Docker Postgres, Liquibase, `BaseEntity`/`Unit`/CRUD, валидация, exception handler, JWT access + запись refresh при логине.
+
+**1. Довести security (шара: «сейчас»).** Logout, интеграционный тест Auth, CORS, смена пароля, `@PreAuthorize` на Unit. Факт: смена пароля и authority на Unit **уже есть** — не переписывать на `hasRole('ADMIN')`. Нет: refresh-обмен, logout, CORS, тесты.
+
+**2. НСИ.** Номенклатура (связь с `Unit`, поиск артикул/имя), склады, `Pageable`, фильтры (Specification/QueryDSL).
+
+**3. Документы и регистры.** Шапка `INCOME`/`OUTCOME`, статусы `DRAFT`/`POSTED`/`CANCELLED`; строки; `StockBalance` + `StockMovement`; проведение `@Transactional`.
+
+**4. Производительность.** Redis `@Cacheable`/`@CacheEvict` на справочники; отчётные `@Query`; индексы движений.
+
+**5. Отчёты.** Остатки, обороты, Excel (POI).
+
+**6. Тесты.** unit / WebMvc+DataJpa / Testcontainers.
+
+**7. Docs и DevOps.** springdoc, Dockerfile приложения, compose App+Postgres+Redis, GitHub Actions.
+
+**8. Мечта.** ms-auth / ms-nsi / ms-docs, Feign, Kafka. Не приоритет.
+
+Готовность по шаре: MVP ≈ сейчас; production-ready ≈ этапы 2–6; enterprise = 8.

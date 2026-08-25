@@ -1,0 +1,50 @@
+---
+description: Права на сущности — обязательная доработка фронтенда при добавлении новой сущности
+alwaysApply: true
+---
+
+# Права на сущности — фронтенд обязателен
+
+При добавлении **каждой новой сущности** с правами `*_READ` / `*_WRITE` (и ролями) **всегда дорабатывай фронтенд** по образцу **единиц измерения** (`units`).
+
+Эталон: `src/main/resources/static/js/app.js`, `index.html`.
+
+## 1. Нет права на просмотр — скрыть вход в список
+
+Пользователь **не должен видеть** команду/кнопку открытия списка, если нет `*_READ` и `*_WRITE`.
+
+Сделать:
+
+- Запись в `ENTITY_PERMISSIONS`: `read: ['ENTITY_READ', 'ENTITY_WRITE']`, `write: ['ENTITY_WRITE']`
+- В `applyPermissionUi()` — скрыть блок навигации и кнопку загрузки списка (`classList.toggle('hidden', !canReadEntity('entity'))`)
+- В `canAccessSection()` — проверка `canReadEntity('entity')` для раздела и карточки
+- В `canAccessRoute()` — для `list`/`card` использовать `canReadEntity`, для `cardNew` — `canWriteEntity`
+- В `searchIndex` — пункт поиска с `entity`, чтобы не находился без прав
+- В `index.html` — кнопка/блок с `id`, которые скрываются в `applyPermissionUi`
+
+Пример (единицы): `#nsi-block-units`, `#btn-load-units`.
+
+## 2. Только просмотр — запретить изменение
+
+Если есть `*_READ`, но нет `*_WRITE`:
+
+- Список: кнопка «Создать» скрыта (`!canWriteEntity`), «Изменить» → «Просмотр»
+- Карточка: `applyReadonlyMode(entity, … || isEntityReadOnlyByPermission(entity))`
+- Баннер: «Только просмотр — недостаточно прав на изменение»
+- Скрыты: сохранение, удаление, меню «Ещё», редактируемые поля
+
+Функции: `canReadEntity`, `canWriteEntity`, `isEntityReadOnlyByPermission`, `applyReadonlyMode`, `applyPermissionUi`.
+
+## 3. Чеклист для новой сущности
+
+- [ ] `ENTITY_PERMISSIONS` + `entityMeta` + `API` + `listState` / `cardState`
+- [ ] Разметка списка и карточки в `index.html`
+- [ ] `applyPermissionUi()` — скрытие навигации без READ
+- [ ] `canAccessSection` / `canAccessRoute` — блокировка маршрутов
+- [ ] `searchIndex` — с учётом прав
+- [ ] Список и карточка — readonly-режим без WRITE
+- [ ] После логина вызывается `loadCurrentUser()` → `applyPermissionUi()`
+
+## 4. Не забывать
+
+Бэкенд (`@PreAuthorize`, миграции прав) — **только по явному запросу** (см. правило `backend-changes-require-approval`). Фронтенд-права делаются **всегда** вместе с новой сущностью, даже если бэкенд уже есть.

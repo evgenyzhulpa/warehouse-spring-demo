@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учёт склада — демо</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/app.css?v=6">
+</head>
+<body>
+<div class="login-overlay" id="login-overlay">
+    <div class="login-modal">
+        <div class="login-modal__logo">W</div>
+        <h2 class="login-modal__title">Вход в систему</h2>
+        <form id="login-form">
+            <div class="form-field">
+                <label>Логин</label>
+                <input type="text" id="login-username" required autocomplete="username">
+            </div>
+            <div class="form-field">
+                <label>Пароль</label>
+                <input type="password" id="login-password" required autocomplete="current-password">
+            </div>
+            <div class="login-modal__error hidden" id="login-error">Неверный логин или пароль</div>
+            <button type="submit" class="btn btn--primary login-modal__submit">Войти</button>
+        </form>
+    </div>
+</div>
+<div class="app" id="app-root" style="display: none;">
+    <header class="app-header">
+        <div class="app-header__logo" title="Склад">W</div>
+        <button type="button" class="app-header__menu-btn" aria-label="Меню">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="app-header__title">Учёт склада — демо</div>
+        <div class="app-header__search-wrap">
+            <div class="app-header__search">
+                <input type="search" id="global-search" placeholder="Поиск по разделам и объектам…" autocomplete="off">
+            </div>
+            <div class="search-dropdown" id="search-dropdown"></div>
+        </div>
+        <div class="app-header__user">
+            <span class="app-header__username" id="header-username" title="Текущий пользователь"></span>
+            <button type="button" class="btn btn--header-logout" id="btn-logout">Выйти</button>
+        </div>
+    </header>
+
+    <div class="app-tabs" id="tabs-bar" role="tablist"></div>
+
+    <div class="app-body">
+        <aside class="sidebar">
+            <ul class="sidebar__nav" id="sidebar-nav"></ul>
+        </aside>
+
+        <main class="main">
+            <div class="main__content">
+                <!-- Home -->
+                <div id="view-home" class="view view--active">
+                    <div class="home-splash">
+                        <div class="home-splash__image">
+                            <img src="/images/erp-splash.png" alt="Учёт склада">
+                        </div>
+                        <div class="home-splash__text">
+                            <h2>Учёт склада</h2>
+                            <p>Демонстрационное веб-приложение складского учёта с REST API на Spring Boot и интерфейсом в фирменном стиле.</p>
+                            <p>Начните с раздела <strong>НСИ и Администрирование</strong> или воспользуйтесь поиском.</p>
+                            <ul class="home-splash__features">
+                                <li>Справочники НСИ и администрирование</li>
+                                <li>Пользователи, роли и права</li>
+                                <li>Создание, изменение, пометка на удаление</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warehouse Hub -->
+                <div id="view-warehouse-hub" class="view">
+                    <h2 class="section-title">Склад</h2>
+                    <div class="nsi-hub">
+                        <div class="nsi-block">
+                            <div class="nsi-block__header">Складские операции</div>
+                            <div class="nsi-block__body">
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Поступление товаров (скоро)</span></div>
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Реализация товаров (скоро)</span></div>
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Списание недостач (скоро)</span></div>
+                            </div>
+                        </div>
+                        <div class="nsi-block">
+                            <div class="nsi-block__header">Отчеты</div>
+                            <div class="nsi-block__body">
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Остатки товаров (скоро)</span></div>
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Движение товаров (скоро)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NSI Hub -->
+                <div id="view-nsi-admin" class="view">
+                    <h2 class="section-title">НСИ и Администрирование</h2>
+                    <div class="nsi-hub">
+                        <div class="nsi-block" id="nsi-block-units" data-access="units">
+                            <div class="nsi-block__header">НСИ</div>
+                            <div class="nsi-block__body">
+                                <button type="button" class="nsi-command" id="btn-load-units"><span>▸</span><span>Единицы измерения</span></button>
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Номенклатура (скоро)</span></div>
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Склады (скоро)</span></div>
+                            </div>
+                        </div>
+                        <div class="nsi-block" id="nsi-block-admin" data-access="admin">
+                            <div class="nsi-block__header">Администрирование</div>
+                            <div class="nsi-block__body">
+                                <button type="button" class="nsi-command" id="btn-load-admin-settings"><span>▸</span><span>Настройки пользователей и прав</span></button>
+                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Настройки системы (скоро)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin settings hub -->
+                <div id="view-admin-settings" class="view">
+                    <h2 class="section-title">Настройки пользователей и прав</h2>
+                    <div class="nsi-hub">
+                        <div class="nsi-block">
+                            <div class="nsi-block__header">Справочники</div>
+                            <div class="nsi-block__body">
+                                <button type="button" class="nsi-command" id="btn-load-users"><span>▸</span><span>Пользователи</span></button>
+                                <button type="button" class="nsi-command" id="btn-load-roles"><span>▸</span><span>Роли пользователей</span></button>
+                                <button type="button" class="nsi-command" id="btn-load-permissions"><span>▸</span><span>Права пользователей</span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Units list -->
+                <div id="view-units" class="view" data-entity="units">
+                    <h2 class="section-title">НСИ — Единицы измерения</h2>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary" data-action="create">Создать</button>
+                        <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr>
+                                <th class="col-mark"></th><th class="col-id">№</th><th>Наименование</th><th class="col-code">Код</th><th>Описание</th>
+                            </tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Users list -->
+                <div id="view-users" class="view" data-entity="users">
+                    <h2 class="section-title">Пользователи</h2>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary" data-action="create">Создать</button>
+                        <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr>
+                                <th class="col-mark"></th><th class="col-id">№</th><th>Логин</th><th>Фамилия</th><th>Имя</th><th>Отчество</th><th class="col-bool">Активен</th>
+                            </tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Roles list -->
+                <div id="view-roles" class="view" data-entity="roles">
+                    <h2 class="section-title">Роли пользователей</h2>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary" data-action="create">Создать</button>
+                        <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr><th class="col-mark"></th><th class="col-id">№</th><th>Наименование</th></tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Permissions list -->
+                <div id="view-permissions" class="view" data-entity="permissions">
+                    <h2 class="section-title">Права пользователей</h2>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn" data-action="view" disabled>Просмотр</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr><th class="col-mark"></th><th>Наименование</th><th class="col-code">Код</th></tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Unit card -->
+                <div id="view-unit-card" class="view" data-entity-card="units">
+                    <h2 class="section-title">Единица измерения</h2>
+                    <div class="entity-card" id="unit-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Единица измерения</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card" title="Закрыть">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner hidden" data-role="readonly-banner">Предопределённый элемент — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--primary btn--primary-bold" data-action="save-close">Записать и закрыть</button>
+                            <button type="button" class="btn" data-action="save">Записать</button>
+                            <span class="entity-card__toolbar-spacer"></span>
+                            <button type="button" class="btn btn--icon" data-action="copy-link" title="Ссылка">🔗</button>
+                            <div class="dropdown" data-role="more-dropdown">
+                                <button type="button" class="btn" data-action="more">Ещё ▾</button>
+                                <div class="dropdown__menu" data-role="more-menu">
+                                    <button type="button" class="dropdown__item" data-action="save">Записать</button>
+                                    <button type="button" class="dropdown__item" data-action="save-close">Записать и закрыть</button>
+                                    <button type="button" class="dropdown__item" data-action="copy-link">Копировать ссылку</button>
+                                    <div class="dropdown__divider"></div>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="mark-deleted">Пометить на удаление</button>
+                                    <button type="button" class="dropdown__item" data-action="unmark-deleted">Снять пометку удаления</button>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="hard-delete">Удалить безвозвратно</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-field" data-field="code"><label>Код *</label><input type="text" data-input="code" maxlength="50" autocomplete="off"></div>
+                            <div class="form-field" data-field="name"><label>Наименование *</label><input type="text" data-input="name" maxlength="255" autocomplete="off"></div>
+                            <div class="form-field" data-field="description"><label>Описание</label><textarea data-input="description" autocomplete="off"></textarea></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User card -->
+                <div id="view-user-card" class="view" data-entity-card="users">
+                    <h2 class="section-title">Пользователь</h2>
+                    <div class="entity-card entity-card--wide" id="user-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Пользователь</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner hidden" data-role="readonly-banner">Предопределённый пользователь — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--primary btn--primary-bold" data-action="save-close">Записать и закрыть</button>
+                            <button type="button" class="btn" data-action="save">Записать</button>
+                            <span class="entity-card__toolbar-spacer"></span>
+                            <button type="button" class="btn btn--icon" data-action="copy-link">🔗</button>
+                            <div class="dropdown" data-role="more-dropdown">
+                                <button type="button" class="btn" data-action="more">Ещё ▾</button>
+                                <div class="dropdown__menu" data-role="more-menu">
+                                    <button type="button" class="dropdown__item" data-action="save">Записать</button>
+                                    <button type="button" class="dropdown__item" data-action="save-close">Записать и закрыть</button>
+                                    <button type="button" class="dropdown__item" data-action="change-password">Сменить пароль</button>
+                                    <button type="button" class="dropdown__item" data-action="copy-link">Копировать ссылку</button>
+                                    <div class="dropdown__divider"></div>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="mark-deleted">Пометить на удаление</button>
+                                    <button type="button" class="dropdown__item" data-action="unmark-deleted">Снять пометку удаления</button>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="hard-delete">Удалить безвозвратно</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-row">
+                                <div class="form-field" data-field="lastName"><label>Фамилия</label><input type="text" data-input="lastName" autocomplete="off"></div>
+                                <div class="form-field" data-field="firstName"><label>Имя</label><input type="text" data-input="firstName" autocomplete="off"></div>
+                                <div class="form-field" data-field="middleName"><label>Отчество</label><input type="text" data-input="middleName" autocomplete="off"></div>
+                            </div>
+                            <div class="form-field" data-field="username">
+                                <label>Логин *</label>
+                                <input type="text" data-input="username" autocomplete="off">
+                                <div class="form-field__hint">При создании заполняется автоматически из ФИО, можно изменить вручную</div>
+                            </div>
+                            <div class="form-field form-field--checkbox hidden" data-role="enabled-field" data-field="enabled">
+                                <label><input type="checkbox" data-input="enabled"> Пользователь активен</label>
+                            </div>
+                            <div class="form-field hidden" data-role="password-change-trigger">
+                                <label>Пароль</label>
+                                <button type="button" class="btn btn--secondary" data-action="change-password">Сменить пароль</button>
+                                <div class="form-field__hint">Для смены пароля потребуется текущий пароль пользователя</div>
+                            </div>
+                            <div data-role="create-password-block">
+                                <div class="form-field" data-field="password">
+                                    <label>Пароль *</label>
+                                    <div class="password-field">
+                                        <input type="password" data-input="password" autocomplete="new-password">
+                                        <button type="button" class="password-field__toggle" data-toggle-password aria-label="Показать пароль">👁</button>
+                                    </div>
+                                    <div class="password-strength" data-role="strength"><div class="password-strength__bar"><div class="password-strength__fill"></div></div><div class="password-strength__label">Надёжность пароля</div></div>
+                                    <ul class="password-rules" data-role="password-rules">
+                                        <li data-rule="length">Не менее 8 символов</li>
+                                        <li data-rule="lower">Строчная буква</li>
+                                        <li data-rule="upper">Заглавная буква</li>
+                                        <li data-rule="digit">Цифра</li>
+                                    </ul>
+                                </div>
+                                <div class="form-field" data-field="passwordConfirm">
+                                    <label>Подтверждение пароля *</label>
+                                    <div class="password-field">
+                                        <input type="password" data-input="passwordConfirm" autocomplete="new-password">
+                                        <button type="button" class="password-field__toggle" data-toggle-password aria-label="Показать пароль">👁</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="password-panel hidden" data-role="change-password-panel">
+                                <h3 class="password-panel__title">Смена пароля</h3>
+                                <div class="form-field" data-field="oldPassword">
+                                    <label>Текущий пароль *</label>
+                                    <div class="password-field"><input type="password" data-input="oldPassword" autocomplete="current-password"><button type="button" class="password-field__toggle" data-toggle-password>👁</button></div>
+                                </div>
+                                <div class="form-field" data-field="newPassword">
+                                    <label>Новый пароль *</label>
+                                    <div class="password-field"><input type="password" data-input="newPassword" autocomplete="new-password"><button type="button" class="password-field__toggle" data-toggle-password>👁</button></div>
+                                    <div class="password-strength" data-role="change-strength"><div class="password-strength__bar"><div class="password-strength__fill"></div></div><div class="password-strength__label">Надёжность пароля</div></div>
+                                </div>
+                                <div class="form-field" data-field="newPasswordConfirm">
+                                    <label>Подтверждение нового пароля *</label>
+                                    <div class="password-field"><input type="password" data-input="newPasswordConfirm" autocomplete="new-password"><button type="button" class="password-field__toggle" data-toggle-password>👁</button></div>
+                                </div>
+                                <button type="button" class="btn btn--primary" data-action="apply-password-change">Применить смену пароля</button>
+                            </div>
+                            <div class="form-field" data-field="rolesIdentifiers">
+                                <label>Роли *</label>
+                                <div class="checkbox-list" data-role="roles-checklist"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role card -->
+                <div id="view-role-card" class="view" data-entity-card="roles">
+                    <h2 class="section-title">Роль пользователя</h2>
+                    <div class="entity-card entity-card--wide" id="role-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Роль</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner hidden" data-role="readonly-banner">Предопределённая роль — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--primary btn--primary-bold" data-action="save-close">Записать и закрыть</button>
+                            <button type="button" class="btn" data-action="save">Записать</button>
+                            <span class="entity-card__toolbar-spacer"></span>
+                            <button type="button" class="btn btn--icon" data-action="copy-link">🔗</button>
+                            <div class="dropdown" data-role="more-dropdown">
+                                <button type="button" class="btn" data-action="more">Ещё ▾</button>
+                                <div class="dropdown__menu" data-role="more-menu">
+                                    <button type="button" class="dropdown__item" data-action="save">Записать</button>
+                                    <button type="button" class="dropdown__item" data-action="save-close">Записать и закрыть</button>
+                                    <button type="button" class="dropdown__item" data-action="copy-link">Копировать ссылку</button>
+                                    <div class="dropdown__divider"></div>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="mark-deleted">Пометить на удаление</button>
+                                    <button type="button" class="dropdown__item" data-action="unmark-deleted">Снять пометку удаления</button>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="hard-delete">Удалить безвозвратно</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-field" data-field="name"><label>Наименование *</label><input type="text" data-input="name" maxlength="255" autocomplete="off"></div>
+                            <div class="form-field" data-field="permissionsIdentifiers">
+                                <label>Права *</label>
+                                <div class="checkbox-list" data-role="permissions-checklist"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permission card (read-only) -->
+                <div id="view-permission-card" class="view" data-entity-card="permissions">
+                    <h2 class="section-title">Право пользователя</h2>
+                    <div class="entity-card entity-card--readonly" id="permission-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Право</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner" data-role="readonly-banner">Предопределённое право — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--icon" data-action="copy-link">🔗</button>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-field" data-field="name"><label>Наименование</label><input type="text" data-input="name" readonly></div>
+                            <div class="form-field" data-field="code"><label>Код</label><input type="text" data-input="code" readonly></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="validation-error-bubble" class="field-error field-error--floating hidden" role="alert">
+                    <button type="button" class="field-error__close" id="validation-error-close">×</button>
+                    <div class="field-error__nav hidden" id="validation-error-nav">
+                        <button type="button" class="field-error__arrow" id="validation-error-prev">◀</button>
+                        <span id="validation-error-counter">1 / 1</span>
+                        <button type="button" class="field-error__arrow" id="validation-error-next">▶</button>
+                    </div>
+                    <div class="field-error__title">Ошибка:</div>
+                    <div class="field-error__message" id="validation-error-message"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+    <script src="/js/app.js?v=15"></script>
+</body>
+</html>

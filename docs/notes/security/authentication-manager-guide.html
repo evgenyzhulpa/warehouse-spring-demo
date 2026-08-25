@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Spring Security: Руководство по AuthenticationManager, AuthenticationProvider и работе с документацией</title>
+<style>
+@page {
+    size: A4;
+    margin: 16mm 14mm 18mm 14mm;
+    @bottom-right {
+        content: counter(page);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 8pt;
+        color: #64748b;
+    }
+}
+:root {
+    --primary: #0f3d68;
+    --primary-light: #eef6fc;
+    --secondary: #0284c7;
+    --accent: #059669;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --dark: #0f172a;
+    --text: #1e293b;
+    --text-muted: #475569;
+    --border: #cbd5e1;
+    --bg-code: #0b1320;
+    --bg-light: #f8fafc;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    color: var(--text);
+    font-size: 9.8pt;
+    background: #fff;
+}
+h1, h2, h3, h4 {
+    color: var(--primary);
+    font-weight: 700;
+    page-break-after: avoid;
+}
+h1 { font-size: 22pt; line-height: 1.2; margin: 0 0 3mm 0; }
+h2 { font-size: 15pt; border-bottom: 2px solid var(--secondary); padding-bottom: 1.5mm; margin: 8mm 0 3.5mm 0; }
+h3 { font-size: 12pt; margin: 5mm 0 2mm 0; color: #1e40af; }
+h4 { font-size: 10.2pt; margin: 3.5mm 0 1.5mm 0; color: #334155; }
+p, li { orphans: 3; widows: 3; }
+p { margin: 0 0 2.5mm 0; text-align: justify; }
+ul, ol { margin: 0 0 3mm 0; padding-left: 5mm; }
+li { margin-bottom: 1mm; }
+
+/* Обложка */
+.cover-page {
+    min-height: 240mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    page-break-after: always;
+    padding: 8mm 0;
+}
+.cover-badge {
+    display: inline-block;
+    padding: 2mm 5mm;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    margin-bottom: 6mm;
+}
+.cover-title {
+    font-size: 26pt;
+    color: var(--primary);
+    line-height: 1.2;
+    margin-bottom: 4mm;
+}
+.cover-subtitle {
+    font-size: 12.5pt;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 8mm;
+}
+.cover-meta {
+    background: var(--bg-light);
+    border-left: 4px solid var(--secondary);
+    padding: 4mm 5mm;
+    border-radius: 0 6px 6px 0;
+    font-size: 9pt;
+    color: #334155;
+}
+.cover-meta p { margin: 1mm 0; }
+.cover-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 4mm;
+    font-size: 8.5pt;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Оглавление */
+.toc-container {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4mm 5mm;
+    margin: 4mm 0 6mm 0;
+}
+.toc-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5mm;
+}
+.toc-item { font-size: 9.5pt; }
+.toc-item a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.toc-item a:hover { text-decoration: underline; }
+
+/* Код */
+code {
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 8.5pt;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 0.5mm 1.5mm;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+}
+pre {
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 8pt;
+    line-height: 1.4;
+    background: var(--bg-code);
+    color: #f8fafc;
+    padding: 3mm 4mm;
+    border-radius: 6px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 2mm 0 3.5mm 0;
+    page-break-inside: avoid;
+    border: 1px solid #1e293b;
+}
+pre code { background: transparent; color: inherit; padding: 0; border: none; }
+.code-keyword { color: #f472b6; font-weight: bold; }
+.code-type { color: #38bdf8; }
+.code-string { color: #a3e635; }
+.code-comment { color: #94a3b8; font-style: italic; }
+.code-annotation { color: #fbbf24; }
+.code-method { color: #60a5fa; }
+.code-number { color: #fb923c; }
+
+/* Таблицы */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0 4mm 0;
+    font-size: 8.8pt;
+    page-break-inside: avoid;
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 2mm 2.5mm;
+    text-align: left;
+    vertical-align: top;
+}
+th { background: #f1f5f9; color: var(--primary); font-weight: 700; }
+tr:nth-child(even) td { background: #fafafa; }
+
+/* Плашки */
+.callout {
+    padding: 3mm 4mm;
+    margin: 3mm 0 3.5mm 0;
+    border-left: 4px solid var(--secondary);
+    background: var(--primary-light);
+    border-radius: 0 4px 4px 0;
+    page-break-inside: avoid;
+    font-size: 9pt;
+}
+.callout p:last-child { margin-bottom: 0; }
+.callout-title { font-weight: 700; margin-bottom: 1mm; display: flex; align-items: center; gap: 2mm; }
+.callout.warn { border-left-color: var(--warn); background: #fffbeb; color: #78350f; }
+.callout.warn .callout-title { color: #b45309; }
+.callout.danger { border-left-color: var(--danger); background: #fef2f2; color: #7f1d1d; }
+.callout.danger .callout-title { color: #b91c1c; }
+.callout.success { border-left-color: var(--accent); background: #ecfdf5; color: #064e3b; }
+.callout.success .callout-title { color: #047857; }
+
+/* Схемы */
+.diagram-box {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 3mm;
+    margin: 3mm 0 4mm 0;
+    page-break-inside: avoid;
+    text-align: center;
+}
+.diagram-caption {
+    font-size: 8.5pt;
+    color: var(--text-muted);
+    margin-top: 1.5mm;
+    font-weight: 600;
+}
+.page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- ОБЛОЖКА -->
+<div class="cover-page">
+    <div>
+        <div class="cover-badge">Тематический конспект-справочник</div>
+        <h1 class="cover-title">Spring Security:<br>AuthenticationManager, AuthenticationProvider и работа с документацией</h1>
+        <div class="cover-subtitle">
+            Исчерпывающий разбор архитектуры диспетчеризации аутентификации, анатомии провайдеров, экспорта бинов и методов эффективного чтения официальной документации Spring (docs.spring.io) на английском языке.
+        </div>
+        <div class="cover-meta">
+            <p><strong>Контекст разработки:</strong> Java 17, Spring Boot 3.5.5, Spring Security 6.x.</p>
+            <p><strong>Для кого:</strong> Разработчики, переходящие в Java/Spring (включая специалистов из 1С/Enterprise), желающие досконально понимать внутреннее устройство фреймворка без «магии».</p>
+            <p><strong>Ключевые темы:</strong> Цепочка проверки подлинности, <code>ProviderManager</code>, <code>DaoAuthenticationProvider</code>, <code>AuthenticationConfiguration</code>, устранение <code>NoSuchBeanDefinitionException</code>, навигация по <code>docs.spring.io</code>, чтение исходников в IntelliJ IDEA, 4-шаговая методика работы с английской документацией (A2+/B1).</p>
+        </div>
+    </div>
+    <div class="cover-footer">
+        <span>Spring Security Specialized Deep Dive</span>
+        <span>Август 2026</span>
+    </div>
+</div>
+
+<!-- ОГЛАВЛЕНИЕ -->
+<h2>Содержание конспекта</h2>
+<div class="toc-container">
+    <div class="toc-grid">
+        <div class="toc-item"><a href="#sec1">1. Интуитивная аналогия: Бюро пропусков и экспертные отделы</a></div>
+        <div class="toc-item"><a href="#sec2">2. Что такое AuthenticationManager и ProviderManager под капотом</a></div>
+        <div class="toc-item"><a href="#sec3">3. Что такое AuthenticationProvider и какие виды бывают</a></div>
+        <div class="toc-item"><a href="#sec4">4. Пошаговая анатомия работы DaoAuthenticationProvider (5 этапов)</a></div>
+        <div class="toc-item"><a href="#sec5">5. Сквозная блок-схема процесса аутентификации (от HTTP до БД)</a></div>
+        <div class="toc-item"><a href="#sec6">6. Зачем пишется отдельный метод @Bean для AuthenticationManager</a></div>
+        <div class="toc-item"><a href="#sec7">7. Два канонических способа объявления бина в Spring Security 6</a></div>
+        <div class="toc-item"><a href="#sec8">8. Что скрывается внутри AuthenticationConfiguration.java</a></div>
+        <div class="toc-item"><a href="#sec9">9. Где искать в официальной документации Spring (docs.spring.io)</a></div>
+        <div class="toc-item"><a href="#sec10">10. Как смотреть документацию и исходники прямо в IntelliJ IDEA</a></div>
+        <div class="toc-item"><a href="#sec11">11. Как комфортно читать документацию на английском с уровнем A2+/B1</a></div>
+        <div class="toc-item"><a href="#sec12">12. Микро-словарь терминов Spring Security (16 ключевых понятий)</a></div>
+    </div>
+</div>
+
+<!-- РАЗДЕЛ 1 -->
+<h2 id="sec1">1. Интуитивная аналогия: Бюро пропусков и экспертные отделы</h2>
+<p>
+Чтобы навсегда устранить путаницу между десятком похожих названий (<code>AuthenticationManager</code>, <code>AuthenticationProvider</code>, <code>UserDetailsService</code>, <code>UserDetails</code>), представим организацию службы безопасности крупного предприятия:
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Компонент Spring Security</th>
+            <th>Аналогия из реальной жизни</th>
+            <th>Обязанности и зона ответственности</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong><code>AuthenticationManager</code></strong></td>
+            <td><strong>Директор бюро пропусков</strong></td>
+            <td>Лично не проверяет подлинность водяных знаков и не копается в архивах. Координирует процесс: принимает документ посетителя и передает его в нужный экспертный отдел.</td>
+        </tr>
+        <tr>
+            <td><strong><code>AuthenticationProvider</code></strong></td>
+            <td><strong>Экспертный отдел / Специалист</strong></td>
+            <td>Узкоспециализированный эксперт по конкретному типу документов. Умеет проверить паспорт с фото, электронную смарт-карту или отпечаток пальца.</td>
+        </tr>
+        <tr>
+            <td><strong><code>DaoAuthenticationProvider</code></strong></td>
+            <td><strong>Эксперт по связке «Логин + Пароль»</strong></td>
+            <td>Специалист, знающий регламент: «Сходи в картотеку кадров по имени сотрудника, достань досье и сравни отпечаток пароля на криптографическом приборе».</td>
+        </tr>
+        <tr>
+            <td><strong><code>UserDetailsService</code></strong></td>
+            <td><strong>Архивариус картотеки</strong></td>
+            <td>Знает, в каком шкафу (в какой таблице PostgreSQL) лежит досье сотрудника. Достает карточку по фамилии/логину. <strong>Пароли сам не проверяет</strong> — просто выдает данные.</td>
+        </tr>
+        <tr>
+            <td><strong><code>UserDetails</code> (<code>AppPrincipal</code>)</strong></td>
+            <td><strong>Личное дело / Карточка сотрудника</strong></td>
+            <td>Контейнер данных: хэш пароля из базы, список допусков и прав (<code>Authorities</code>), флаги активности и блокировки.</td>
+        </tr>
+        <tr>
+            <td><strong><code>PasswordEncoder</code></strong></td>
+            <td><strong>Криптографический прибор</strong></td>
+            <td>Математический калькулятор. Сверяет введенный пароль с захешированным паролем из базы: <code>matches(raw, hash)</code>.</td>
+        </tr>
+        <tr>
+            <td><strong><code>SecurityContext</code></strong></td>
+            <td><strong>Журнал дежурного / Временный бейдж</strong></td>
+            <td>Хранит информацию о том, кто прямо сейчас находится в здании и выполняет текущий HTTP-запрос.</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- РАЗДЕЛ 2 -->
+<h2 id="sec2">2. Что такое AuthenticationManager и ProviderManager под капотом</h2>
+<p>
+В исходном коде Spring Security интерфейс <code>AuthenticationManager</code> содержит ровно один метод:
+</p>
+
+<pre><code><span class="code-keyword">package</span> org.springframework.security.authentication;
+
+<span class="code-keyword">import</span> org.springframework.security.core.Authentication;
+<span class="code-keyword">import</span> org.springframework.security.core.AuthenticationException;
+
+<span class="code-keyword">public interface</span> <span class="code-type">AuthenticationManager</span> {
+    <span class="code-type">Authentication</span> <span class="code-method">authenticate</span>(<span class="code-type">Authentication</span> authentication) <span class="code-keyword">throws</span> <span class="code-type">AuthenticationException</span>;
+}</code></pre>
+
+<ul>
+    <li><strong>На вход:</strong> Неаутентифицированный объект <code>Authentication</code> (например, <code>UsernamePasswordAuthenticationToken</code> с сырыми логином и паролем, у которого флаг <code>isAuthenticated() == false</code>).</li>
+    <li><strong>На выходе:</strong> Подтвержденный объект <code>Authentication</code> (с <code>Principal</code>, подтвержденными правами <code>authorities</code>, очищенным паролем и флагом <code>isAuthenticated() == true</code>).</li>
+    <li><strong>При ошибке:</strong> Выбрасывается подкласс <code>AuthenticationException</code> (<code>BadCredentialsException</code>, <code>DisabledException</code>, <code>LockedException</code>).</li>
+</ul>
+
+<h3>ProviderManager — реализация по умолчанию</h3>
+<p>
+В 99% случаев реализацией интерфейса выступает класс <code>ProviderManager</code>. Внутри него хранится обычный список провайдеров:
+</p>
+<pre><code><span class="code-keyword">public class</span> <span class="code-type">ProviderManager</span> <span class="code-keyword">implements</span> <span class="code-type">AuthenticationManager</span> {
+    <span class="code-keyword">private</span> <span class="code-type">List</span>&lt;<span class="code-type">AuthenticationProvider</span>&gt; providers;
+    <span class="code-comment">// ...</span>
+}</code></pre>
+<p>
+При вызове <code>authenticate()</code> он в цикле опрашивает каждый провайдер:
+</p>
+<ol>
+    <li>Вызывает <code>provider.supports(authentication.getClass())</code>.</li>
+    <li>Если провайдер возвращает <code>true</code>, вызывается <code>provider.authenticate(authentication)</code>.</li>
+    <li>Если проверка успешна, цикл завершается, и готовый объект возвращается вызывающей стороне.</li>
+</ol>
+
+<!-- РАЗДЕЛ 3 -->
+<div class="page-break"></div>
+<h2 id="sec3">3. Что такое AuthenticationProvider и какие виды бывают</h2>
+<p>
+Интерфейс <code>AuthenticationProvider</code> — это компонент, в котором реализована конкретная механика проверки учетных данных:
+</p>
+
+<pre><code><span class="code-keyword">public interface</span> <span class="code-type">AuthenticationProvider</span> {
+    <span class="code-type">Authentication</span> <span class="code-method">authenticate</span>(<span class="code-type">Authentication</span> authentication) <span class="code-keyword">throws</span> <span class="code-type">AuthenticationException</span>;
+    <span class="code-keyword">boolean</span> <span class="code-method">supports</span>(<span class="code-type">Class</span>&lt;?&gt; authentication);
+}</code></pre>
+
+<table>
+    <thead>
+        <tr>
+            <th>Провайдер</th>
+            <th>Для чего применяется</th>
+            <th>С какими компонентами работает</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong><code>DaoAuthenticationProvider</code></strong></td>
+            <td>Классический вход по логину и паролю из базы данных (наш проект).</td>
+            <td><code>UserDetailsService</code> (загрузка из БД) + <code>PasswordEncoder</code> (BCrypt).</td>
+        </tr>
+        <tr>
+            <td><strong><code>LdapAuthenticationProvider</code></strong></td>
+            <td>Вход через корпоративный каталог Active Directory / LDAP.</td>
+            <td><code>LdapAuthenticator</code>, <code>LdapAuthoritiesPopulator</code>.</td>
+        </tr>
+        <tr>
+            <td><strong><code>JwtAuthenticationProvider</code></strong></td>
+            <td>Проверка цифровой подписи и claims токенов JWT (OAuth2 Resource Server).</td>
+            <td><code>JwtDecoder</code>, <code>JwtAuthenticationConverter</code>.</td>
+        </tr>
+        <tr>
+            <td><strong><code>RememberMeAuthenticationProvider</code></strong></td>
+            <td>Вход по долгоживущей cookie "Запомнить меня".</td>
+            <td><code>RememberMeServices</code>, ключ подписи cookie.</td>
+        </tr>
+        <tr>
+            <td><strong><code>AnonymousAuthenticationProvider</code></strong></td>
+            <td>Предоставляет анонимный контекст неавторизованным гостям.</td>
+            <td>Константа роли <code>ROLE_ANONYMOUS</code>.</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- РАЗДЕЛ 4 -->
+<h2 id="sec4">4. Пошаговая анатомия работы DaoAuthenticationProvider (5 этапов)</h2>
+<p>
+Когда в контроллере вызывается <code>authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login, password))</code>, провайдер <code>DaoAuthenticationProvider</code> выполняет строго 5 шагов:
+</p>
+
+<ol>
+    <li>
+        <strong>Шаг 1: Загрузка досье из БД (<code>loadUserByUsername</code>)</strong><br>
+        Провайдер извлекает имя пользователя из токена и вызывает <code>userDetailsService.loadUserByUsername(username)</code>. Сервис идет в таблицу <code>users</code> через JPA Repository и возвращает объект <code>UserDetails</code> (<code>AppPrincipal</code>). Если пользователь не найден — сразу выбрасывается <code>UsernameNotFoundException</code>.
+    </li>
+    <li>
+        <strong>Шаг 2: Проверка системных статусов аккаунта (Account Status Checks)</strong><br>
+        Провайдер проверяет 4 булевых флага:
+        <ul>
+            <li><code>isAccountNonLocked()</code> — не заблокирован ли пользователь? (если false $\to$ <code>LockedException</code>);</li>
+            <li><code>isEnabled()</code> — активен ли пользователь? (если false $\to$ <code>DisabledException</code>);</li>
+            <li><code>isAccountNonExpired()</code> — не истек ли срок действия учетной записи? (если false $\to$ <code>AccountExpiredException</code>);</li>
+            <li><code>isCredentialsNonExpired()</code> — не протух ли пароль? (если false $\to$ <code>CredentialsExpiredException</code>).</li>
+        </ul>
+    </li>
+    <li>
+        <strong>Шаг 3: Сверка хэша пароля (<code>passwordEncoder.matches</code>)</strong><br>
+        Провайдер берет сырой пароль от клиента и хэш из <code>UserDetails.getPassword()</code>, после чего вызывает:
+        <pre><code><span class="code-keyword">if</span> (!passwordEncoder.matches(rawPassword, userDetails.getPassword())) {
+    <span class="code-keyword">throw new</span> <span class="code-type">BadCredentialsException</span>(<span class="code-string">"Неверный логин или пароль"</span>);
+}</code></pre>
+    </li>
+    <li>
+        <strong>Шаг 4: Стирание пароля из памяти (Credentials Erasing)</strong><br>
+        В целях безопасности сырой пароль удаляется из объекта токена (<code>credentials = null</code>), чтобы он случайно не утек в логи, дампы кучи (Heap Dump) или трассировку стека.
+    </li>
+    <li>
+        <strong>Шаг 5: Создание подтвержденного объекта Authentication</strong><br>
+        Провайдер конструирует новый токен с тремя параметрами:
+        <code>new UsernamePasswordAuthenticationToken(principal, null, userDetails.getAuthorities())</code>.
+        У этого токена флаг <code>isAuthenticated()</code> равен <code>true</code>.
+    </li>
+</ol>
+
+<!-- РАЗДЕЛ 5 -->
+<div class="page-break"></div>
+<h2 id="sec5">5. Сквозная блок-схема процесса аутентификации</h2>
+
+<div class="diagram-box">
+    <svg width="100%" height="320" viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#0284c7"/>
+            </marker>
+            <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+            </marker>
+        </defs>
+
+        <!-- Клиент -->
+        <rect x="10" y="110" width="120" height="75" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+        <text x="70" y="135" text-anchor="middle" font-family="Segoe UI" font-size="10" font-weight="bold" fill="#0f3d68">HTTP Клиент</text>
+        <text x="70" y="152" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#64748b">POST /login/auth</text>
+        <text x="70" y="167" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#475569">{"username", "pass"}</text>
+
+        <path d="M 130 147 L 165 147" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- AuthController -->
+        <rect x="170" y="80" width="150" height="135" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="245" y="105" text-anchor="middle" font-family="Segoe UI" font-size="10.5" font-weight="bold" fill="#0369a1">AuthController</text>
+        <text x="180" y="128" font-family="Segoe UI" font-size="8" fill="#334155">1. new Token(u, p)</text>
+        <text x="180" y="142" font-family="Segoe UI" font-size="7.5" fill="#64748b">isAuthenticated = false</text>
+        <text x="180" y="162" font-family="Segoe UI" font-size="8" fill="#334155">2. authManager</text>
+        <text x="180" y="176" font-family="Segoe UI" font-size="8" fill="#334155">   .authenticate(token)</text>
+        <text x="180" y="198" font-family="Segoe UI" font-size="7.5" font-weight="bold" fill="#0369a1">6. Выпуск JWT токенов</text>
+
+        <path d="M 320 147 L 355 147" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- AuthenticationManager / ProviderManager -->
+        <rect x="360" y="45" width="180" height="205" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="450" y="70" text-anchor="middle" font-family="Segoe UI" font-size="10.5" font-weight="bold" fill="#166534">AuthenticationManager</text>
+        <text x="450" y="86" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">(ProviderManager)</text>
+        
+        <rect x="370" y="98" width="160" height="140" rx="4" fill="#ffffff" stroke="#86efac" stroke-width="1.2"/>
+        <text x="450" y="118" text-anchor="middle" font-family="Segoe UI" font-size="9" font-weight="bold" fill="#15803d">DaoAuthenticationProvider</text>
+        <text x="378" y="138" font-family="Segoe UI" font-size="7.5" fill="#334155">• supports(Token.class) == true</text>
+        <text x="378" y="153" font-family="Segoe UI" font-size="7.5" fill="#334155">• 3. loadUserByUsername()</text>
+        <text x="378" y="168" font-family="Segoe UI" font-size="7.5" fill="#334155">• 4. isEnabled() & isNonLocked()</text>
+        <text x="378" y="183" font-family="Segoe UI" font-size="7.5" fill="#334155">• 5. passwordEncoder.matches()</text>
+        <text x="378" y="200" font-family="Segoe UI" font-size="7.5" fill="#64748b">• credentials = null (erase)</text>
+        <text x="378" y="220" font-family="Segoe UI" font-size="7.5" font-weight="bold" fill="#15803d">• return Auth(Principal, Authz)</text>
+
+        <!-- Внешние сервисы (UserDetailsService и PasswordEncoder) -->
+        <path d="M 530 135 L 575 90" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <rect x="580" y="55" width="170" height="70" rx="5" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5"/>
+        <text x="665" y="75" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#6b21a8">UserDetailsService</text>
+        <text x="665" y="90" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">UserDetailsServiceImpl -&gt; DB</text>
+        <text x="665" y="105" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#7e22ce">Возврат AppPrincipal (User)</text>
+
+        <path d="M 530 190 L 575 225" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <rect x="580" y="195" width="170" height="70" rx="5" fill="#fff1f2" stroke="#fda4af" stroke-width="1.5"/>
+        <text x="665" y="217" text-anchor="middle" font-family="Segoe UI" font-size="9.5" font-weight="bold" fill="#9f1239">PasswordEncoder</text>
+        <text x="665" y="232" text-anchor="middle" font-family="Segoe UI" font-size="8" fill="#475569">BCryptPasswordEncoder(12)</text>
+        <text x="665" y="247" text-anchor="middle" font-family="Segoe UI" font-size="7.5" fill="#be123c">matches(rawPassword, hash)</text>
+    </svg>
+    <div class="diagram-caption">Рис. 5.1. Полная архитектурная цепочка аутентификации пользователя в Spring Security</div>
+</div>
+
+<!-- РАЗДЕЛ 6 -->
+<h2 id="sec6">6. Зачем пишется отдельный метод @Bean для AuthenticationManager</h2>
+<p>
+Один из самых частых вопросов: <em>«Зачем в SecurityConfiguration объявлять отдельный бин менеджера, если Spring Security и так уже настроен?»</em>.
+</p>
+
+<h3>Проблема скрытого бина (NoSuchBeanDefinitionException)</h3>
+<p>
+По умолчанию Spring Security создает экземпляр <code>AuthenticationManager</code> внутри своих фильтров исключительно для внутренних нужд и <strong>не экспортирует его в ApplicationContext</strong> в качестве публичного Spring-бина.
+</p>
+<p>
+Если в <code>AuthController</code> попытаться заинжектить его через конструктор:
+</p>
+<pre><code><span class="code-annotation">@RestController</span>
+<span class="code-annotation">@RequiredArgsConstructor</span>
+<span class="code-keyword">public class</span> <span class="code-type">AuthController</span> {
+    <span class="code-comment">// БЕЗ МЕТОДА @Bean БУДЕТ ОШИБКА ПРИ СТАРТЕ:</span>
+    <span class="code-comment">// Parameter 0 of constructor in AuthController required a bean of type 'AuthenticationManager' that could not be found.</span>
+    <span class="code-keyword">private final</span> <span class="code-type">AuthenticationManager</span> authenticationManager;
+}</code></pre>
+
+<div class="callout success">
+    <div class="callout-title">Вывод</div>
+    <p>Метод с аннотацией <code>@Bean</code> пишется ровно для того, чтобы <strong>«выставить» менеджер наружу</strong> в общий контейнер внедрения зависимостей (IoC Container), позволив внедрять его в любые контроллеры и сервисы.</p>
+</div>
+
+<!-- РАЗДЕЛ 7 -->
+<div class="page-break"></div>
+<h2 id="sec7">7. Два канонических способа объявления бина в Spring Security 6</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Способ</th>
+            <th>Фрагмент кода</th>
+            <th>Как работает и когда применять</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Способ 1 (Рекомендуемый):</strong> Через <code>AuthenticationConfiguration</code></td>
+            <td>
+<pre><code><span class="code-annotation">@Bean</span>
+<span class="code-keyword">public</span> <span class="code-type">AuthenticationManager</span> <span class="code-method">authenticationManager</span>(
+        <span class="code-type">AuthenticationConfiguration</span> authConfig) <span class="code-keyword">throws</span> <span class="code-type">Exception</span> {
+    <span class="code-keyword">return</span> authConfig.getAuthenticationManager();
+}</code></pre>
+            </td>
+            <td>
+                <strong>Стандарт Spring Boot 3.</strong> Spring автоматически находит зарегистрированные в проекте бины <code>UserDetailsService</code> и <code>PasswordEncoder</code>, под капотом собирает <code>DaoAuthenticationProvider</code> и отдает готовый <code>ProviderManager</code>.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Способ 2 (Явный):</strong> Ручная сборка <code>ProviderManager</code></td>
+            <td>
+<pre><code><span class="code-annotation">@Bean</span>
+<span class="code-keyword">public</span> <span class="code-type">AuthenticationManager</span> <span class="code-method">authenticationManager</span>(
+        <span class="code-type">UserDetailsService</span> userDetailsService,
+        <span class="code-type">PasswordEncoder</span> passwordEncoder) {
+    <span class="code-type">DaoAuthenticationProvider</span> provider = <span class="code-keyword">new</span> <span class="code-type">DaoAuthenticationProvider</span>();
+    provider.setUserDetailsService(userDetailsService);
+    provider.setPasswordEncoder(passwordEncoder);
+    <span class="code-keyword">return new</span> <span class="code-type">ProviderManager</span>(provider);
+}</code></pre>
+            </td>
+            <td>
+                <strong>Полный контроль.</strong> Применяется, когда в приложении несколько источников входа (например, база данных + корпоративный LDAP) и нужно передать список провайдеров <code>new ProviderManager(daoProvider, ldapProvider)</code>.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- РАЗДЕЛ 8 -->
+<h2 id="sec8">8. Что скрывается внутри AuthenticationConfiguration.java</h2>
+<p>
+Если открыть исходный код класса <code>AuthenticationConfiguration.java</code>, можно увидеть, как фреймворк выполняет автоматическую связку:
+</p>
+
+<pre><code><span class="code-annotation">@Bean</span>
+<span class="code-keyword">public static</span> <span class="code-type">InitializeUserDetailsBeanManagerConfigurer</span> <span class="code-method">initializeUserDetailsBeanManagerConfigurer</span>(...) {
+    <span class="code-comment">// Ищет в контексте бин типа UserDetailsService</span>
+    <span class="code-keyword">return new</span> <span class="code-type">InitializeUserDetailsBeanManagerConfigurer</span>(context);
+}
+
+<span class="code-annotation">@Bean</span>
+<span class="code-keyword">public static</span> <span class="code-type">InitializeAuthenticationProviderBeanManagerConfigurer</span> <span class="code-method">initializeAuthenticationProviderBeanManagerConfigurer</span>(...) {
+    <span class="code-comment">// Ищет PasswordEncoder и связывает его с UserDetailsService в DaoAuthenticationProvider</span>
+    <span class="code-keyword">return new</span> <span class="code-type">InitializeAuthenticationProviderBeanManagerConfigurer</span>(context);
+}</code></pre>
+
+<!-- РАЗДЕЛ 9 -->
+<h2 id="sec9">9. Где искать в официальной документации Spring (docs.spring.io)</h2>
+<p>
+Официальный портал: <a href="https://docs.spring.io/spring-security/reference/">docs.spring.io/spring-security/reference/</a>.
+</p>
+
+<div class="callout warn">
+    <div class="callout-title">Критическое разделение: Authentication vs Authorization</div>
+    <p>
+        • <strong>Authentication (Аутентификация — <code>/servlet/authentication/...</code>):</strong> Отвечает на вопрос <em>«Кто ты?»</em>. Ищи здесь всё про логин, пароли, токены, <code>AuthenticationManager</code>, <code>DaoAuthenticationProvider</code>, <code>UserDetailsService</code>, <code>PasswordEncoder</code>.<br>
+        • <strong>Authorization (Авторизация — <code>/servlet/authorization/...</code>):</strong> Отвечает на вопрос <em>«Что тебе разрешено делать?»</em>. Ищи здесь всё про роли, права доступа, <code>@PreAuthorize</code>, <code>requestMatchers()</code>, ошибки 403 Forbidden.
+    </p>
+</div>
+
+<!-- РАЗДЕЛ 10 -->
+<div class="page-break"></div>
+<h2 id="sec10">10. Как смотреть документацию и исходники прямо в IntelliJ IDEA</h2>
+<p>
+В 1С нажатие <code>Ctrl + F1</code> открывает Синтакс-помощник. В Java документация устроена двухуровнево: скомпилированный байткод <code>.jar</code> и исходники с комментариями <code>-sources.jar</code>.
+</p>
+
+<ol>
+    <li>
+        <strong>Горячая клавиша Quick Documentation (<code>Ctrl + Q</code> / <code>F1</code>):</strong><br>
+        Поставьте курсор на имя метода или класса (например, <code>getAuthenticationManager</code>) и нажмите <code>Ctrl + Q</code>. IDEA откроет всплывающее окно с примерами кода из Javadoc.
+    </li>
+    <li>
+        <strong>Кнопка "Download Sources" (Скачать исходники):</strong><br>
+        Если при переходе в класс открывается декомпилированный код без комментариев, нажмите на желтой полосе вверху кнопку <strong>"Download Sources"</strong>. Gradle скачает оригинальные Java-файлы с комментариями создателей фреймворка.
+    </li>
+</ol>
+
+<!-- РАЗДЕЛ 11 -->
+<h2 id="sec11">11. Как комфортно читать документацию на английском с уровнем A2+/B1</h2>
+<p>
+Технический английский в документации Spring сухой, структурированный и состоит из 300–400 повторяющихся терминов.
+</p>
+
+<h3>4-шаговая методика диагонального чтения</h3>
+<ol>
+    <li><strong>Шаг 1: Смотрите на схемы и код (70% понимания).</strong> Пролистайте страницу сразу до диаграммы или листинга Java. Названия методов и типов объясняют суть лучше любого текста.</li>
+    <li><strong>Шаг 2: Читайте информационные блоки (Callouts).</strong> Блоки <em>Tip</em> (рекомендация), <em>Note</em> (важное примечание) и <em>Warning / Deprecated</em> (устаревший код) содержат квинтэссенцию страницы.</li>
+    <li><strong>Шаг 3: Читайте только первое предложение каждого абзаца.</strong> В англоязычной технической литературе главное утверждение всегда идет в первом предложении (Topic Sentence). Если оно не про вашу проблему — пропускайте весь абзац.</li>
+    <li><strong>Шаг 4: Используйте двуязычный переводчик (Immersive Translate).</strong> Расширение для браузера, выводящее русский перевод под оригинальной английской строкой и не ломающее код.</li>
+</ol>
+
+<!-- РАЗДЕЛ 12 -->
+<h2 id="sec12">12. Микро-словарь терминов Spring Security</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Термин</th>
+            <th>Перевод</th>
+            <th>Пример в контексте Spring Security</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><strong>delegate</strong></td><td>Делегировать / передавать</td><td><em>AuthenticationManager delegates check to AuthenticationProvider.</em></td></tr>
+        <tr><td><strong>intercept</strong></td><td>Перехватывать</td><td><em>Filter intercepts HTTP request before Controller.</em></td></tr>
+        <tr><td><strong>invoke</strong></td><td>Вызывать / запускать</td><td><em>Invoke authenticationEntryPoint on 401 error.</em></td></tr>
+        <tr><td><strong>expose</strong></td><td>Выставлять наружу / публиковать</td><td><em>Expose AuthenticationManager as a Spring @Bean.</em></td></tr>
+        <tr><td><strong>override</strong></td><td>Переопределять</td><td><em>Override default security configuration.</em></td></tr>
+        <tr><td><strong>bypass</strong></td><td>Пропускать в обход</td><td><em>Public URLs bypass JWT verification filter.</em></td></tr>
+        <tr><td><strong>validate / verify</strong></td><td>Проверять корректность</td><td><em>Verify signature and expiration of JWT token.</em></td></tr>
+        <tr><td><strong>populate</strong></td><td>Заполнять данными</td><td><em>Populate SecurityContext with GrantedAuthorities.</em></td></tr>
+        <tr><td><strong>persist</strong></td><td>Сохранять в базу данных</td><td><em>Persist refresh token hash into PostgreSQL.</em></td></tr>
+        <tr><td><strong>extract</strong></td><td>Извлекать</td><td><em>Extract username claim from JWT payload.</em></td></tr>
+        <tr><td><strong>Principal</strong></td><td>Субъект безопасности</td><td>Объект вошедшего пользователя (<code>UserDetails</code> / <code>AppPrincipal</code>).</td></tr>
+        <tr><td><strong>Credentials</strong></td><td>Реквизиты доступа</td><td>Секретные данные для проверки (пароль, токен, сертификат).</td></tr>
+        <tr><td><strong>Authority</strong></td><td>Полномочие / право</td><td>Неделимое разрешение на действие (<code>UNITS_READ</code>).</td></tr>
+        <tr><td><strong>Prerequisite</strong></td><td>Предварительное условие</td><td>Что должно быть настроено до выполнения шага.</td></tr>
+        <tr><td><strong>Stateless</strong></td><td>Без сохранения состояния</td><td>Сервер не держит HTTP-сессий (REST + JWT).</td></tr>
+        <tr><td><strong>Downstream</strong></td><td>Дальше по конвейеру</td><td>Компоненты, вызываемые следующими в цепочке обработки.</td></tr>
+    </tbody>
+</table>
+
+<div class="callout success">
+    <div class="callout-title">Памятка для быстрой самопроверки</div>
+    <p>
+        1. <code>AuthenticationManager</code> координирует провайдеров.<br>
+        2. <code>DaoAuthenticationProvider</code> связывает <code>UserDetailsService</code> и <code>PasswordEncoder</code>.<br>
+        3. <code>UserDetailsService</code> только читает из базы и не проверяет пароли.<br>
+        4. Бин <code>@Bean public AuthenticationManager</code> нужен для инжекта в контроллер.
+    </p>
+</div>
+
+</body>
+</html>
