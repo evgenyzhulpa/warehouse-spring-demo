@@ -1,22 +1,20 @@
 # warehouse-spring-demo
-Демонстрационный backend учёта склада на **Spring Boot**: REST API, JWT-аутентификация, роли и права, справочник единиц измерения и простой веб-интерфейс.
+
+Демонстрационный учёт склада на **Spring Boot**: REST API, JWT, роли и права, НСИ и черновики прихода/расхода, простой веб-интерфейс.
 
 Репозиторий: [github.com/evgenyzhulpa/warehouse-spring-demo](https://github.com/evgenyzhulpa/warehouse-spring-demo)
 
 ## Что умеет
 
-=======
-Pet-project Warehouse accounting
-Демонстрационный backend учёта склада на **Spring Boot**: REST API, JWT-аутентификация, роли и права, справочник единиц измерения и простой веб-интерфейс.
-Репозиторий: [github.com/evgenyzhulpa/warehouse-spring-demo](https://github.com/evgenyzhulpa/warehouse-spring-demo)
-## Что умеет
 - вход по логину и паролю, access + refresh JWT, выход с отзывом refresh-токена
-- пользователи, роли и права (`FULL_ACCESS`, чтение/запись пользователей, ролей и единиц измерения)
-- CRUD единиц измерения (`units`) с мягким удалением
-- Liquibase-миграции схемы и стартовые данные (пользователь `admin`)
-- UI на статике (`/`) — вход, разделы, работа с API из браузера
+- пользователи, роли и права (`FULL_ACCESS` и пары `*_READ` / `*_WRITE`)
+- НСИ: единицы измерения, склады, номенклатура (артикул уникален, в том числе у помеченных на удаление)
+- черновики поступления и реализации: шапка и строки отдельными запросами, номер документа назначается после записи
+- мягкое удаление шапок и справочников
+- Liquibase-миграции схемы и стартовые данные (пользователь `admin`, основной склад, товар `ART-001`, документы `000001`)
+- UI на статике (`/`) — вход, разделы НСИ и склада, работа с API из браузера
 
-Складской учёт товаров, документов движения и остатков в этой версии ещё не реализован: каркас и админская часть (доступ + единицы измерения).
+Проведения, статусов документа, регистров остатков и движений, цен и заказов в этой версии нет. Списание и отчёты в интерфейсе — заглушки.
 
 ## Стек
 
@@ -183,7 +181,7 @@ curl -X POST http://localhost:8080/login/auth ^
 | GET | `/permissions/` |
 | GET | `/permissions/{id}` |
 
-Коды: `FULL_ACCESS`, `UNITS_READ`, `UNITS_WRITE`, `USERS_READ`, `USERS_WRITE`, `ROLES_READ`, `ROLES_WRITE`.
+Коды: `FULL_ACCESS`, `UNITS_READ`, `UNITS_WRITE`, `WAREHOUSES_READ`, `WAREHOUSES_WRITE`, `PRODUCTS_READ`, `PRODUCTS_WRITE`, `INCOME_DOCUMENTS_READ`, `INCOME_DOCUMENTS_WRITE`, `OUTCOME_DOCUMENTS_READ`, `OUTCOME_DOCUMENTS_WRITE`, `USERS_READ`, `USERS_WRITE`, `ROLES_READ`, `ROLES_WRITE`.
 
 ### Единицы измерения (`/units`)
 
@@ -198,6 +196,63 @@ curl -X POST http://localhost:8080/login/auth ^
 | PATCH | `/units/{id}/mark-deleted` | Мягкое удаление |
 | PATCH | `/units/{id}/unmark-deleted` | Снять пометку |
 | DELETE | `/units/{id}` | Удалить |
+
+### Склады (`/warehouses`)
+
+Права: `WAREHOUSES_READ` / `WAREHOUSES_WRITE` / `FULL_ACCESS`. Системную запись нельзя править как обычную.
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/warehouses/` | Список |
+| GET | `/warehouses/{id}` | По id |
+| POST | `/warehouses/` | Создать `{ "name", "address" }` |
+| PATCH | `/warehouses/{id}` | Изменить |
+| PATCH | `/warehouses/{id}/mark-deleted` | Мягкое удаление |
+| PATCH | `/warehouses/{id}/unmark-deleted` | Снять пометку |
+| DELETE | `/warehouses/{id}` | Удалить |
+
+Список складов в UI: `#/warehouses`. Раздел «Склад» (`#/warehouse`) — хаб документов, не этот справочник.
+
+### Номенклатура (`/products`)
+
+Права: `PRODUCTS_READ` / `PRODUCTS_WRITE` / `FULL_ACCESS`. Единица измерения — внешний ключ, удаление занятой единицы запрещено (`RESTRICT`).
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/products/` | Страница, по умолчанию 20. Фильтры: `name`, `article` |
+| GET | `/products/{id}` | По id |
+| POST | `/products/` | Создать `{ "name", "article", "unitId" }` |
+| PATCH | `/products/{id}` | Изменить |
+| PATCH | `/products/{id}/mark-deleted` | Мягкое удаление |
+| PATCH | `/products/{id}/unmark-deleted` | Снять пометку |
+| DELETE | `/products/{id}` | Удалить |
+
+### Поступление (`/income-documents`)
+
+Права: `INCOME_DOCUMENTS_READ` / `INCOME_DOCUMENTS_WRITE` / `FULL_ACCESS`.
+
+Шапка не содержит строк. `PATCH` шапки меняет склад и дату и не перезаписывает табличную часть. Номер (`000001`, …) только для чтения: он записывается после вставки как шесть цифр id и уникален в своей таблице, включая помеченные документы. Количество в строке — больше нуля, до трёх знаков после запятой.
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/income-documents/` | Журнал, страница 20, сортировка по дате и id. Строк в списке нет |
+| GET | `/income-documents/{id}` | Шапка и `lines[]` |
+| POST | `/income-documents/` | Создать шапку `{ "warehouseId", "documentDate" }` |
+| PATCH | `/income-documents/{id}` | Изменить шапку |
+| PATCH | `/income-documents/{id}/mark-deleted` | Мягкое удаление |
+| PATCH | `/income-documents/{id}/unmark-deleted` | Снять пометку |
+| DELETE | `/income-documents/{id}` | Удалить |
+| POST | `/income-documents/{id}/lines` | Добавить строку `{ "productId", "quantity" }` |
+| PATCH | `/income-documents/{id}/lines/{lineId}` | Изменить строку |
+| DELETE | `/income-documents/{id}/lines/{lineId}` | Удалить строку |
+
+Пока шапка не записана, строки с клиента не отправляются. UI: `#/income-documents`.
+
+### Реализация (`/outcome-documents`)
+
+Зеркало поступления. Права: `OUTCOME_DOCUMENTS_READ` / `OUTCOME_DOCUMENTS_WRITE` / `FULL_ACCESS`. Номер уникален в таблице расхода, не в таблице прихода. Стартовый документ `000001` — свой.
+
+Те же методы, что у `/income-documents`, с префиксом `/outcome-documents`. Тело шапки: `{ "warehouseId", "documentDate" }`. Тело строки: `{ "productId", "quantity" }`. UI: `#/outcome-documents`.
 
 ## Структура проекта
 
@@ -227,7 +282,7 @@ docker/           PostgreSQL
 ./gradlew test
 ```
 
-Артефакт: `build/libs/` после `bootJar` / `build`.
+Автотестов в репозитории пока нет: `test` отрабатывает без проверок API и БД. Артефакт: `build/libs/` после `bootJar` / `build`.
 
 ## Конфигурация
 
