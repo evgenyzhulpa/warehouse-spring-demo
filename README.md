@@ -1,11 +1,15 @@
 # warehouse-spring-demo
-
 Демонстрационный backend учёта склада на **Spring Boot**: REST API, JWT-аутентификация, роли и права, справочник единиц измерения и простой веб-интерфейс.
 
 Репозиторий: [github.com/evgenyzhulpa/warehouse-spring-demo](https://github.com/evgenyzhulpa/warehouse-spring-demo)
 
 ## Что умеет
 
+=======
+Pet-project Warehouse accounting
+Демонстрационный backend учёта склада на **Spring Boot**: REST API, JWT-аутентификация, роли и права, справочник единиц измерения и простой веб-интерфейс.
+Репозиторий: [github.com/evgenyzhulpa/warehouse-spring-demo](https://github.com/evgenyzhulpa/warehouse-spring-demo)
+## Что умеет
 - вход по логину и паролю, access + refresh JWT, выход с отзывом refresh-токена
 - пользователи, роли и права (`FULL_ACCESS`, чтение/запись пользователей, ролей и единиц измерения)
 - CRUD единиц измерения (`units`) с мягким удалением
