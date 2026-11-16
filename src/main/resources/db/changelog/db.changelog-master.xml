@@ -16,4 +16,8 @@
     <include file="v1.0.2026.06/20260618-0001-add-fullname-to-users.xml" relativeToChangelogFile="true"/>
     <include file="v1.0.2026.06/20260618-0002-add-system-defined-to-units.xml" relativeToChangelogFile="true"/>
     <include file="v1.0.2026.08/20260805-0001-refresh_tokens.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.11/20261114-0001-warehouses.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.11/20261114-0003-products.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.11/20261114-0005-income-documents.xml" relativeToChangelogFile="true"/>
+    <include file="v1.0.2026.11/20261114-0007-outcome-documents.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

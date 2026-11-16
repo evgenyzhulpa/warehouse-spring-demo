@@ -668,6 +668,65 @@ body {
     color: var(--color-danger);
 }
 
+.entity-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.form-field--inline {
+    margin-bottom: 0;
+    min-width: 180px;
+}
+
+.entity-pager {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.entity-pager__info {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.lookup-field {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.lookup-field input {
+    flex: 1;
+}
+
+.doc-lines {
+    margin-top: 18px;
+}
+
+.doc-lines__header {
+    font-family: var(--font-display);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.doc-lines__toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.doc-lines__table {
+    max-height: 280px;
+}
+
+.doc-lines input[data-line-qty] {
+    width: 110px;
+}
+
 .entity-table-wrap {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);

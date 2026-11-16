@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261114-0001" author="EvgenyZhulpa">
+        <comment>Creating the table warehouses with basic fields (BaseEntity, SystemEntity)</comment>
+        <createTable tableName="warehouses">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="system_defined" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="address" type="TEXT"/>
+        </createTable>
+
+        <createIndex tableName="warehouses" indexName="idx_warehouses_deleted">
+            <column name="deleted"/>
+        </createIndex>
+
+        <insert tableName="warehouses">
+            <column name="name" value="Основной склад"/>
+            <column name="address" value=""/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="20261114-0002" author="EvgenyZhulpa">
+        <comment>Warehouse catalog permissions</comment>
+        <insert tableName="permissions">
+            <column name="code" value="WAREHOUSES_READ"/>
+            <column name="name" value="Просмотр (чтение) складов"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+        <insert tableName="permissions">
+            <column name="code" value="WAREHOUSES_WRITE"/>
+            <column name="name" value="Добавление и изменение складов"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
