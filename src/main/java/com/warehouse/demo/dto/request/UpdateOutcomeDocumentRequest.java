@@ -1,0 +1,12 @@
+package com.warehouse.demo.dto.request;
+
+import jakarta.validation.constraints.NotNull;
+
+import java.time.LocalDateTime;
+
+public record UpdateOutcomeDocumentRequest(
+        @NotNull(message = "Не заполнен склад")
+        Long warehouseId,
+        @NotNull(message = "Не заполнена дата документа")
+        LocalDateTime documentDate
+) {}

@@ -6,6 +6,10 @@
         refresh: '/login/refresh',
         logout: '/login/logout',
         units: '/units',
+        warehouses: '/warehouses',
+        products: '/products',
+        incomeDocuments: '/income-documents',
+        outcomeDocuments: '/outcome-documents',
         users: '/users',
         roles: '/roles',
         permissions: '/permissions',
@@ -24,10 +28,18 @@
         nsiAdmin: { id: 'nsiAdmin', title: 'НСИ и Администрирование', tabLabel: 'НСИ и Администрирование', tabIcon: '📋', sidebarLabel: 'НСИ и Администрирование', sidebarIcon: '⚙️' },
         adminSettings: { id: 'adminSettings', title: 'Настройки пользователей и прав', tabLabel: 'Настройки', tabIcon: '🔐', parent: 'nsiAdmin' },
         units: { id: 'units', title: 'Единицы измерения', tabLabel: 'Единицы измерения', tabIcon: '📏', parent: 'nsiAdmin' },
+        warehouses: { id: 'warehouses', title: 'Склады', tabLabel: 'Склады', tabIcon: '🏭', parent: 'nsiAdmin' },
+        products: { id: 'products', title: 'Номенклатура', tabLabel: 'Номенклатура', tabIcon: '📦', parent: 'nsiAdmin' },
+        incomeDocuments: { id: 'incomeDocuments', title: 'Поступления товаров', tabLabel: 'Поступления', tabIcon: '📥', parent: 'warehouse' },
+        outcomeDocuments: { id: 'outcomeDocuments', title: 'Реализации товаров', tabLabel: 'Реализации', tabIcon: '📤', parent: 'warehouse' },
         users: { id: 'users', title: 'Пользователи', tabLabel: 'Пользователи', tabIcon: '👤', parent: 'adminSettings' },
         roles: { id: 'roles', title: 'Роли пользователей', tabLabel: 'Роли', tabIcon: '🛡', parent: 'adminSettings' },
         permissions: { id: 'permissions', title: 'Права пользователей', tabLabel: 'Права', tabIcon: '🔑', parent: 'adminSettings', readOnly: true },
         unitCard: { id: 'unitCard', title: 'Единица измерения', viewId: 'unitCard' },
+        warehouseCard: { id: 'warehouseCard', title: 'Склад', viewId: 'warehouseCard' },
+        productCard: { id: 'productCard', title: 'Номенклатура', viewId: 'productCard' },
+        incomeDocumentCard: { id: 'incomeDocumentCard', title: 'Поступление товаров', viewId: 'incomeDocumentCard' },
+        outcomeDocumentCard: { id: 'outcomeDocumentCard', title: 'Реализация товаров', viewId: 'outcomeDocumentCard' },
         userCard: { id: 'userCard', title: 'Пользователь', viewId: 'userCard' },
         roleCard: { id: 'roleCard', title: 'Роль', viewId: 'roleCard' },
         permissionCard: { id: 'permissionCard', title: 'Право', viewId: 'permissionCard' },
@@ -35,6 +47,30 @@
 
     const entityMeta = {
         units: { api: API.units, listKey: 'units', listSection: 'units', cardSection: 'unitCard', hash: 'units', label: (i) => i.name || 'Единица' },
+        warehouses: { api: API.warehouses, listKey: 'warehouses', listSection: 'warehouses', cardSection: 'warehouseCard', hash: 'warehouses', label: (i) => i.name || 'Склад' },
+        products: { api: API.products, listKey: 'products', listSection: 'products', cardSection: 'productCard', hash: 'products', label: (i) => i.name || 'Номенклатура' },
+        incomeDocuments: {
+            api: API.incomeDocuments,
+            listKey: 'incomeDocuments',
+            listSection: 'incomeDocuments',
+            cardSection: 'incomeDocumentCard',
+            hash: 'income-documents',
+            listViewId: 'view-income-documents',
+            cardViewId: 'view-income-document-card',
+            cardRootId: 'income-document-card-root',
+            label: (i) => (i.number ? 'Поступление ' + i.number : 'Поступление'),
+        },
+        outcomeDocuments: {
+            api: API.outcomeDocuments,
+            listKey: 'outcomeDocuments',
+            listSection: 'outcomeDocuments',
+            cardSection: 'outcomeDocumentCard',
+            hash: 'outcome-documents',
+            listViewId: 'view-outcome-documents',
+            cardViewId: 'view-outcome-document-card',
+            cardRootId: 'outcome-document-card-root',
+            label: (i) => (i.number ? 'Реализация ' + i.number : 'Реализация'),
+        },
         users: { api: API.users, listKey: 'users', listSection: 'users', cardSection: 'userCard', hash: 'users', label: (i) => i.username || 'Пользователь' },
         roles: { api: API.roles, listKey: 'roles', listSection: 'roles', cardSection: 'roleCard', hash: 'roles', label: (i) => i.name || 'Роль' },
         permissions: { api: API.permissions, listKey: 'permissions', listSection: 'permissions', cardSection: 'permissionCard', hash: 'permissions', label: (i) => i.name || 'Право', readOnly: true },
@@ -42,6 +78,10 @@
 
     const ENTITY_PERMISSIONS = {
         units: { read: ['UNITS_READ', 'UNITS_WRITE'], write: ['UNITS_WRITE'] },
+        warehouses: { read: ['WAREHOUSES_READ', 'WAREHOUSES_WRITE'], write: ['WAREHOUSES_WRITE'] },
+        products: { read: ['PRODUCTS_READ', 'PRODUCTS_WRITE'], write: ['PRODUCTS_WRITE'] },
+        incomeDocuments: { read: ['INCOME_DOCUMENTS_READ', 'INCOME_DOCUMENTS_WRITE'], write: ['INCOME_DOCUMENTS_WRITE'] },
+        outcomeDocuments: { read: ['OUTCOME_DOCUMENTS_READ', 'OUTCOME_DOCUMENTS_WRITE'], write: ['OUTCOME_DOCUMENTS_WRITE'] },
         users: { read: ['USERS_READ', 'USERS_WRITE'], write: ['USERS_WRITE'] },
         roles: { read: ['ROLES_READ', 'ROLES_WRITE'], write: ['ROLES_WRITE'] },
         permissions: { read: ['ROLES_READ', 'ROLES_WRITE'], write: [] },
@@ -56,6 +96,10 @@
         { title: 'НСИ и Администрирование', keywords: ['нси', 'администрирование'], path: 'НСИ', sectionId: 'nsiAdmin' },
         { title: 'Настройки пользователей и прав', keywords: ['настройки', 'пользователи', 'права', 'роли'], path: 'Администрирование', sectionId: 'adminSettings' },
         { title: 'Единицы измерения', keywords: ['единицы', 'измерение'], path: 'НСИ', sectionId: 'units', entity: 'units' },
+        { title: 'Склады', keywords: ['склады', 'склад', 'адрес'], path: 'НСИ', sectionId: 'warehouses', entity: 'warehouses' },
+        { title: 'Номенклатура', keywords: ['номенклатура', 'товар', 'артикул'], path: 'НСИ', sectionId: 'products', entity: 'products' },
+        { title: 'Поступления товаров', keywords: ['поступление', 'приход', 'документ'], path: 'Склад', sectionId: 'incomeDocuments', entity: 'incomeDocuments' },
+        { title: 'Реализации товаров', keywords: ['реализация', 'расход', 'продажа', 'документ'], path: 'Склад', sectionId: 'outcomeDocuments', entity: 'outcomeDocuments' },
         { title: 'Пользователи', keywords: ['пользователь', 'логин', 'admin'], path: 'Администрирование', sectionId: 'users', entity: 'users' },
         { title: 'Роли пользователей', keywords: ['роль', 'роли'], path: 'Администрирование', sectionId: 'roles', entity: 'roles' },
         { title: 'Права пользователей', keywords: ['право', 'права', 'доступ'], path: 'Администрирование', sectionId: 'permissions', entity: 'permissions' },
@@ -72,6 +116,10 @@
 
     const listState = {
         units: { cache: [], selectedId: null },
+        warehouses: { cache: [], selectedId: null },
+        products: { cache: [], selectedId: null, page: 0, size: 20, totalPages: 0, totalElements: 0, filterName: '', filterArticle: '' },
+        incomeDocuments: { cache: [], selectedId: null, page: 0, size: 20, totalPages: 0, totalElements: 0 },
+        outcomeDocuments: { cache: [], selectedId: null, page: 0, size: 20, totalPages: 0, totalElements: 0 },
         users: { cache: [], selectedId: null },
         roles: { cache: [], selectedId: null },
         permissions: { cache: [], selectedId: null },
@@ -79,12 +127,17 @@
 
     const cardState = {
         units: { deleted: false, systemDefined: false, readonly: false },
+        warehouses: { deleted: false, systemDefined: false, readonly: false },
+        products: { deleted: false, systemDefined: false, readonly: false },
+        incomeDocuments: { deleted: false, systemDefined: false, readonly: false, lines: [] },
+        outcomeDocuments: { deleted: false, systemDefined: false, readonly: false, lines: [] },
         users: { deleted: false, systemDefined: false, readonly: false, usernameManual: false },
         roles: { deleted: false, systemDefined: false, readonly: false },
         permissions: { deleted: false, systemDefined: true, readonly: true },
     };
 
-    const sessionDeleted = { units: new Set(), users: new Set(), roles: new Set() };
+    const sessionDeleted = { units: new Set(), warehouses: new Set(), products: new Set(), incomeDocuments: new Set(), outcomeDocuments: new Set(), users: new Set(), roles: new Set() };
+    let catalogChoiceContext = null;
     let permissionIdByCode = new Map();
     let rolesCatalog = [];
     let permissionsCatalog = [];
@@ -118,6 +171,10 @@
         return perms ? hasPermission(...perms.write) : false;
     }
 
+    function canCreateInList(entity) {
+        return canWriteEntity(entity) && !entityMeta[entity]?.readOnly;
+    }
+
     function isEntityReadOnlyByPermission(entity) {
         return !canWriteEntity(entity) && !entityMeta[entity]?.readOnly;
     }
@@ -128,12 +185,24 @@
             case 'warehouse':
                 return true;
             case 'nsiAdmin':
-                return canReadEntity('units') || canAccessSection('adminSettings');
+                return canReadEntity('units') || canReadEntity('warehouses') || canReadEntity('products') || canAccessSection('adminSettings');
             case 'adminSettings':
                 return canReadEntity('users') || canReadEntity('roles') || canReadEntity('permissions');
             case 'units':
             case 'unitCard':
                 return canReadEntity('units');
+            case 'warehouses':
+            case 'warehouseCard':
+                return canReadEntity('warehouses');
+            case 'products':
+            case 'productCard':
+                return canReadEntity('products');
+            case 'incomeDocuments':
+            case 'incomeDocumentCard':
+                return canReadEntity('incomeDocuments');
+            case 'outcomeDocuments':
+            case 'outcomeDocumentCard':
+                return canReadEntity('outcomeDocuments');
             case 'users':
             case 'userCard':
                 return canReadEntity('users');
@@ -167,9 +236,13 @@
     }
 
     function applyPermissionUi() {
-        document.getElementById('nsi-block-units')?.classList.toggle('hidden', !canReadEntity('units'));
+        document.getElementById('nsi-block-units')?.classList.toggle('hidden', !canReadEntity('units') && !canReadEntity('warehouses') && !canReadEntity('products'));
         document.getElementById('nsi-block-admin')?.classList.toggle('hidden', !canAccessSection('adminSettings'));
         document.getElementById('btn-load-units')?.classList.toggle('hidden', !canReadEntity('units'));
+        document.getElementById('btn-load-warehouses')?.classList.toggle('hidden', !canReadEntity('warehouses'));
+        document.getElementById('btn-load-products')?.classList.toggle('hidden', !canReadEntity('products'));
+        document.getElementById('btn-load-income-documents')?.classList.toggle('hidden', !canReadEntity('incomeDocuments'));
+        document.getElementById('btn-load-outcome-documents')?.classList.toggle('hidden', !canReadEntity('outcomeDocuments'));
         document.getElementById('btn-load-admin-settings')?.classList.toggle('hidden', !canAccessSection('adminSettings'));
         document.getElementById('btn-load-users')?.classList.toggle('hidden', !canReadEntity('users'));
         document.getElementById('btn-load-roles')?.classList.toggle('hidden', !canReadEntity('roles'));
@@ -184,9 +257,9 @@
         Object.keys(entityMeta).forEach((entity) => {
             const view = getListView(entity);
             if (!view) return;
-            const createBtn = view.querySelector('[data-action="create"]');
-            if (createBtn) createBtn.classList.toggle('hidden', !canWriteEntity(entity));
-            const editBtn = view.querySelector('[data-action="edit"]');
+            const createBtn = view.querySelector('.entity-toolbar [data-action="create"]');
+            if (createBtn) createBtn.classList.toggle('hidden', !canCreateInList(entity));
+            const editBtn = view.querySelector('.entity-toolbar [data-action="edit"]');
             if (editBtn) editBtn.textContent = canWriteEntity(entity) ? 'Изменить' : 'Просмотр';
             updateListToolbar(entity);
         });
@@ -203,10 +276,18 @@
             nsiAdmin: 'view-nsi-admin',
             adminSettings: 'view-admin-settings',
             units: 'view-units',
+            warehouses: 'view-warehouses',
+            products: 'view-products',
+            incomeDocuments: 'view-income-documents',
+            outcomeDocuments: 'view-outcome-documents',
             users: 'view-users',
             roles: 'view-roles',
             permissions: 'view-permissions',
             unitCard: 'view-unit-card',
+            warehouseCard: 'view-warehouse-card',
+            productCard: 'view-product-card',
+            incomeDocumentCard: 'view-income-document-card',
+            outcomeDocumentCard: 'view-outcome-document-card',
             userCard: 'view-user-card',
             roleCard: 'view-role-card',
             permissionCard: 'view-permission-card',
@@ -215,16 +296,18 @@
     }
 
     function getListView(entity) {
-        return document.getElementById('view-' + entity);
+        const meta = entityMeta[entity];
+        return document.getElementById(meta?.listViewId || ('view-' + entity));
     }
 
     function getCardView(entity) {
-        return document.getElementById('view-' + entity.replace(/s$/, '') + '-card');
+        const meta = entityMeta[entity];
+        return document.getElementById(meta?.cardViewId || ('view-' + entity.replace(/s$/, '') + '-card'));
     }
 
     function getCardRoot(entity) {
-        const ids = { units: 'unit-card-root', users: 'user-card-root', roles: 'role-card-root', permissions: 'permission-card-root' };
-        return document.getElementById(ids[entity]);
+        const ids = { units: 'unit-card-root', warehouses: 'warehouse-card-root', products: 'product-card-root', incomeDocuments: 'income-document-card-root', outcomeDocuments: 'outcome-document-card-root', users: 'user-card-root', roles: 'role-card-root', permissions: 'permission-card-root' };
+        return document.getElementById(ids[entity] || entityMeta[entity]?.cardRootId);
     }
 
     function apiUrl(entity, suffix) {
@@ -456,8 +539,8 @@
             const meta = sections[activeSection];
             const isActive = id === activeSection || (meta && meta.parent === id) ||
                 (activeSection.endsWith('Card') && tab && tab.fromSection === id) ||
-                (['units', 'users', 'roles', 'permissions', 'adminSettings', 'unitCard', 'userCard', 'roleCard', 'permissionCard'].includes(activeSection) &&
-                    ((id === 'nsiAdmin' && ['units', 'unitCard'].includes(activeSection)) ||
+                (['units', 'warehouses', 'products', 'users', 'roles', 'permissions', 'adminSettings', 'unitCard', 'warehouseCard', 'productCard', 'userCard', 'roleCard', 'permissionCard'].includes(activeSection) &&
+                    ((id === 'nsiAdmin' && ['units', 'unitCard', 'warehouses', 'warehouseCard', 'products', 'productCard'].includes(activeSection)) ||
                         (id === 'nsiAdmin' && ['adminSettings', 'users', 'roles', 'permissions', 'userCard', 'roleCard', 'permissionCard'].includes(activeSection))));
             link.classList.toggle('sidebar__link--active', isActive);
         });
@@ -515,6 +598,7 @@
             denyAccess();
             return;
         }
+        if (!options.choice) clearCatalogChoiceMode();
         const tabId = options.tabId || sectionId;
         openTab({ id: tabId, sectionId, label: options.label || meta.tabLabel, icon: options.icon || meta.tabIcon, pinned: meta.pinned, fromSection: options.fromSection });
         activeTabId = tabId;
@@ -523,6 +607,7 @@
         showViewForTab(getActiveTab());
         updateSidebarActive();
         renderTabs();
+        applyCatalogChoiceUi();
         if (options.syncHash !== false) syncHash();
     }
 
@@ -707,16 +792,31 @@
 
     function updateListToolbar(entity) {
         const view = getListView(entity);
+        const toolbar = view?.querySelector('.entity-toolbar');
+        if (!toolbar) return;
+        const hasSelection = listState[entity].selectedId != null;
+        toolbar.querySelector('[data-action="edit"]')?.toggleAttribute('disabled', !hasSelection);
+        toolbar.querySelector('[data-action="view"]')?.toggleAttribute('disabled', !hasSelection);
+        toolbar.querySelector('[data-action="copy-link"]')?.toggleAttribute('disabled', !hasSelection);
+        const createBtn = toolbar.querySelector('[data-action="create"]');
+        if (createBtn) createBtn.classList.toggle('hidden', !canCreateInList(entity));
+        const choosing = catalogChoiceContext && catalogChoiceContext.catalog === entity;
+        if (choosing) {
+            const item = listState[entity].cache.find((i) => String(i.id) === String(listState[entity].selectedId));
+            const canChoose = item && !isDeleted(entity, item);
+            toolbar.querySelector('[data-action="choose"]')?.toggleAttribute('disabled', !canChoose);
+        }
+        applyCatalogChoiceUi();
+    }
+
+    function selectListRow(entity, id) {
+        const view = getListView(entity);
         if (!view) return;
-        const state = listState[entity];
-        const hasSelection = state.selectedId != null;
-        const item = state.cache.find((i) => String(i.id) === String(state.selectedId));
-        const readOnly = entityMeta[entity].readOnly || (item && isSystemDefined(entity, item));
-        view.querySelector('[data-action="edit"]')?.toggleAttribute('disabled', !hasSelection);
-        view.querySelector('[data-action="view"]')?.toggleAttribute('disabled', !hasSelection);
-        view.querySelector('[data-action="copy-link"]')?.toggleAttribute('disabled', !hasSelection);
-        const createBtn = view.querySelector('[data-action="create"]');
-        if (createBtn) createBtn.classList.toggle('hidden', !canWriteEntity(entity) || entityMeta[entity].readOnly);
+        listState[entity].selectedId = id;
+        view.querySelectorAll('[data-role="table-body"] tr').forEach((row) => {
+            row.classList.toggle('row--selected', String(row.dataset.id) === String(id));
+        });
+        updateListToolbar(entity);
     }
 
     function renderMarkCell(entity, item) {
@@ -741,6 +841,7 @@
             wrap.classList.add('hidden');
             empty.classList.remove('hidden');
             setListStatus(entity, 'Записей не найдено.', false);
+            if (isPagedEntity(entity)) renderEntityPager(entity);
             return;
         }
 
@@ -761,6 +862,19 @@
                 cells += '<td><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.name) + '</a></td>';
                 cells += '<td class="col-code">' + escapeHtml(item.code) + '</td>';
                 cells += '<td>' + escapeHtml(item.description || '—') + '</td>';
+            } else if (entity === 'warehouses') {
+                cells += '<td class="col-id"><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.id) + '</a></td>';
+                cells += '<td><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.name) + '</a></td>';
+                cells += '<td>' + escapeHtml(item.address || '—') + '</td>';
+            } else if (entity === 'products') {
+                cells += '<td class="col-id"><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.id) + '</a></td>';
+                cells += '<td class="col-code"><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.article) + '</a></td>';
+                cells += '<td><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.name) + '</a></td>';
+                cells += '<td>' + escapeHtml(item.unitName || '—') + '</td>';
+            } else if (entity === 'incomeDocuments' || entity === 'outcomeDocuments') {
+                cells += '<td class="col-code"><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.number) + '</a></td>';
+                cells += '<td><a class="entity-table__link" href="' + href + '">' + escapeHtml(formatDateTime(item.documentDate)) + '</a></td>';
+                cells += '<td>' + escapeHtml(item.warehouseName || '—') + '</td>';
             } else if (entity === 'users') {
                 cells += '<td class="col-id"><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.id) + '</a></td>';
                 cells += '<td><a class="entity-table__link" href="' + href + '">' + escapeHtml(item.username) + '</a></td>';
@@ -778,23 +892,53 @@
 
             tr.innerHTML = cells;
             tr.addEventListener('click', (e) => {
-                if (e.target.closest('a')) return;
-                state.selectedId = item.id;
-                renderEntityTable(entity, state.cache);
+                const link = e.target.closest('a');
+                const choosing = catalogChoiceContext && catalogChoiceContext.catalog === entity;
+                if (link && choosing) e.preventDefault();
+                else if (link && (e.ctrlKey || e.metaKey || e.shiftKey)) return;
+                if (link) e.preventDefault();
+                selectListRow(entity, item.id);
             });
-            tr.addEventListener('dblclick', () => openEntityCard(entity, item.id));
+            tr.addEventListener('dblclick', () => {
+                if (catalogChoiceContext && catalogChoiceContext.catalog === entity) confirmCatalogChoice(item);
+                else openEntityCard(entity, item.id);
+            });
             tbody.appendChild(tr);
         });
 
         updateListToolbar(entity);
-        setListStatus(entity, 'Записей: ' + state.cache.length, false);
+        if (isPagedEntity(entity)) {
+            setListStatus(entity, 'Записей: ' + state.cache.length + ' из ' + (state.totalElements || 0), false);
+            renderEntityPager(entity);
+        } else {
+            setListStatus(entity, 'Записей: ' + state.cache.length, false);
+        }
     }
 
     async function loadEntityList(entity) {
         setListStatus(entity, 'Загрузка…', false);
         try {
-            const data = await apiRequest(apiUrl(entity));
+            let url = apiUrl(entity);
+            if (isPagedEntity(entity)) {
+                const state = listState[entity];
+                const params = new URLSearchParams();
+                params.set('page', String(state.page || 0));
+                params.set('size', String(state.size || 20));
+                if (entity === 'products') {
+                    if (state.filterName) params.set('name', state.filterName);
+                    if (state.filterArticle) params.set('article', state.filterArticle);
+                }
+                url += '?' + params.toString();
+            }
+            const data = await apiRequest(url);
             let items = data[entityMeta[entity].listKey] || [];
+            if (isPagedEntity(entity)) {
+                const state = listState[entity];
+                state.page = data.page || 0;
+                state.size = data.size || 20;
+                state.totalElements = data.totalElements || 0;
+                state.totalPages = data.totalPages || 0;
+            }
             if (entity === 'permissions') {
                 if (permissionIdByCode.size === 0) await buildPermissionIdMap();
                 items = items.map((p) => ({ ...p, id: permissionIdByCode.get(p.code) || p.id }));
@@ -807,6 +951,248 @@
             view.querySelector('[data-role="table-wrap"]')?.classList.add('hidden');
             view.querySelector('[data-role="empty"]')?.classList.remove('hidden');
             setListStatus(entity, 'Ошибка: ' + err.message, true);
+        }
+    }
+
+    function isPagedEntity(entity) {
+        return entity === 'products' || entity === 'incomeDocuments' || entity === 'outcomeDocuments';
+    }
+
+    function renderEntityPager(entity) {
+        const view = getListView(entity);
+        const pager = view?.querySelector('[data-role="pager"]');
+        if (!pager) return;
+        const state = listState[entity];
+        const totalPages = state.totalPages || 0;
+        pager.classList.toggle('hidden', totalPages <= 1 && (state.totalElements || 0) <= (state.size || 20));
+        const info = pager.querySelector('[data-role="pager-info"]');
+        if (info) info.textContent = totalPages ? ('Стр. ' + ((state.page || 0) + 1) + ' из ' + totalPages) : '';
+        pager.querySelector('[data-action="page-prev"]')?.toggleAttribute('disabled', (state.page || 0) <= 0);
+        pager.querySelector('[data-action="page-next"]')?.toggleAttribute('disabled', totalPages === 0 || (state.page || 0) >= totalPages - 1);
+    }
+
+    function applyProductFilters() {
+        const view = getListView('products');
+        listState.products.filterArticle = (view.querySelector('[data-filter="article"]')?.value || '').trim();
+        listState.products.filterName = (view.querySelector('[data-filter="name"]')?.value || '').trim();
+        listState.products.page = 0;
+        loadEntityList('products');
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString('ru-RU');
+    }
+
+    function toDateTimeLocalValue(value) {
+        const d = value ? new Date(value) : new Date();
+        if (Number.isNaN(d.getTime())) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+
+    function fromDateTimeLocalValue(value) {
+        if (!value) return null;
+        return value.length === 16 ? value + ':00' : value;
+    }
+
+    function applyCatalogChoiceUi() {
+        ['units', 'warehouses', 'products'].forEach((catalog) => {
+            const view = getListView(catalog);
+            if (!view) return;
+            const choosing = catalogChoiceContext && catalogChoiceContext.catalog === catalog;
+            view.querySelector('[data-role="choice-banner"]')?.classList.toggle('hidden', !choosing);
+            view.querySelector('[data-action="choose"]')?.classList.toggle('hidden', !choosing);
+            view.querySelector('[data-action="cancel-choice"]')?.classList.toggle('hidden', !choosing);
+        });
+    }
+
+    function clearCatalogChoiceMode() {
+        catalogChoiceContext = null;
+        applyCatalogChoiceUi();
+    }
+
+    function returnFromCatalogChoice(returnTabId) {
+        const tab = openTabs.find((t) => t.id === returnTabId);
+        if (!tab) return;
+        activeTabId = tab.id;
+        activeCardEntity = tab.entity || null;
+        showViewForTab(tab);
+        updateSidebarActive();
+        renderTabs();
+        syncHash();
+    }
+
+    function openCatalogChoice(catalog, extra) {
+        const deny = {
+            units: 'Недостаточно прав для выбора единицы измерения',
+            warehouses: 'Недостаточно прав для выбора склада',
+            products: 'Недостаточно прав для выбора номенклатуры',
+        };
+        if (!canReadEntity(catalog)) {
+            denyAccess(deny[catalog] || 'Недостаточно прав');
+            return;
+        }
+        catalogChoiceContext = Object.assign({ catalog: catalog, returnTabId: activeTabId }, extra || {});
+        navigateTo(entityMeta[catalog].listSection, { choice: true });
+    }
+
+    async function confirmCatalogChoice(item) {
+        if (!catalogChoiceContext) return;
+        const catalog = catalogChoiceContext.catalog;
+        if (!item) {
+            const id = listState[catalog].selectedId;
+            item = listState[catalog].cache.find((i) => String(i.id) === String(id));
+        }
+        if (!item) return showToast('Выберите запись', true);
+        if (isDeleted(catalog, item)) {
+            const msg = {
+                units: 'Нельзя выбрать помеченную на удаление единицу',
+                warehouses: 'Нельзя выбрать помеченный на удаление склад',
+                products: 'Нельзя выбрать помеченную на удаление номенклатуру',
+            };
+            return showToast(msg[catalog] || 'Нельзя выбрать помеченную запись', true);
+        }
+        const ctx = catalogChoiceContext;
+        const returnTabId = ctx.returnTabId;
+        clearCatalogChoiceMode();
+        returnFromCatalogChoice(returnTabId);
+        if (catalog === 'units') {
+            const root = getCardRoot('products');
+            setCardValue(root, 'unitId', item.id);
+            setCardValue(root, 'unitName', item.name);
+        } else if (catalog === 'warehouses') {
+            const entity = ctx.documentEntity || 'incomeDocuments';
+            const root = getCardRoot(entity);
+            setCardValue(root, 'warehouseId', item.id);
+            setCardValue(root, 'warehouseName', item.name);
+        } else if (catalog === 'products') {
+            const entity = ctx.documentEntity || 'incomeDocuments';
+            if (ctx.mode === 'patch-line') await patchDocumentLineProduct(entity, ctx.lineId, item);
+            else await addDocumentLineWithProduct(entity, item);
+        }
+    }
+
+    function isStockDocument(entity) {
+        return entity === 'incomeDocuments' || entity === 'outcomeDocuments';
+    }
+
+    function getDocumentId(entity) {
+        return getCardRoot(entity)?.querySelector('[data-field="id"]')?.value || '';
+    }
+
+    function updateDocumentLinesUi(entity) {
+        const root = getCardRoot(entity);
+        if (!root) return;
+        const hasId = !!getDocumentId(entity);
+        const readonly = !!cardState[entity].readonly;
+        const deleted = !!cardState[entity].deleted;
+        root.querySelector('[data-role="lines-locked"]')?.classList.toggle('hidden', hasId);
+        root.querySelector('[data-role="lines-toolbar"]')?.classList.toggle('hidden', !hasId || readonly || deleted);
+        renderDocumentLines(entity);
+    }
+
+    function renderDocumentLines(entity) {
+        const root = getCardRoot(entity);
+        if (!root) return;
+        const wrap = root.querySelector('[data-role="lines-table-wrap"]');
+        const tbody = root.querySelector('[data-role="lines-body"]');
+        const lines = cardState[entity].lines || [];
+        const readonly = !!cardState[entity].readonly || !!cardState[entity].deleted;
+        tbody.innerHTML = '';
+        wrap.classList.toggle('hidden', lines.length === 0);
+        lines.forEach((line, idx) => {
+            const tr = document.createElement('tr');
+            tr.dataset.lineId = line.id;
+            const qty = line.quantity == null ? '' : String(line.quantity);
+            tr.innerHTML =
+                '<td class="col-id">' + (idx + 1) + '</td>' +
+                '<td><div class="lookup-field">' +
+                    '<input type="text" readonly value="' + escapeHtml(line.productName || '') + '">' +
+                    '<button type="button" class="btn" data-action="choose-line-product" title="Выбрать">…</button>' +
+                '</div></td>' +
+                '<td class="col-code">' + escapeHtml(line.productArticle || '—') + '</td>' +
+                '<td><input type="number" min="0.001" step="0.001" data-line-qty value="' + escapeHtml(qty) + '"' + (readonly ? ' disabled' : '') + '></td>' +
+                '<td class="col-mark"><button type="button" class="btn" data-action="delete-line">Удалить</button></td>';
+            const chooseBtn = tr.querySelector('[data-action="choose-line-product"]');
+            const deleteBtn = tr.querySelector('[data-action="delete-line"]');
+            if (readonly) {
+                chooseBtn.classList.add('hidden');
+                deleteBtn.classList.add('hidden');
+            } else {
+                chooseBtn.addEventListener('click', () => openCatalogChoice('products', { mode: 'patch-line', lineId: line.id, documentEntity: entity }));
+                deleteBtn.addEventListener('click', () => deleteDocumentLine(entity, line.id));
+                tr.querySelector('[data-line-qty]').addEventListener('change', (e) => patchDocumentLineQuantity(entity, line.id, e.target.value));
+            }
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function addDocumentLineWithProduct(entity, product) {
+        const id = getDocumentId(entity);
+        if (!id) return showToast('Сначала запишите документ', true);
+        try {
+            const saved = await apiRequest(apiUrl(entity, id + '/lines'), {
+                method: 'POST',
+                body: JSON.stringify({ productId: product.id, quantity: 1 }),
+            });
+            cardState[entity].lines = (cardState[entity].lines || []).concat([saved]);
+            renderDocumentLines(entity);
+        } catch (err) {
+            showToast(err.message || 'Не удалось добавить строку', true);
+        }
+    }
+
+    async function patchDocumentLineProduct(entity, lineId, product) {
+        const id = getDocumentId(entity);
+        const line = (cardState[entity].lines || []).find((l) => String(l.id) === String(lineId));
+        if (!id || !line) return;
+        try {
+            const saved = await apiRequest(apiUrl(entity, id + '/lines/' + lineId), {
+                method: 'PATCH',
+                body: JSON.stringify({ productId: product.id, quantity: line.quantity }),
+            });
+            cardState[entity].lines = cardState[entity].lines.map((l) => String(l.id) === String(lineId) ? saved : l);
+            renderDocumentLines(entity);
+        } catch (err) {
+            showToast(err.message || 'Не удалось изменить строку', true);
+        }
+    }
+
+    async function patchDocumentLineQuantity(entity, lineId, rawQty) {
+        const id = getDocumentId(entity);
+        const line = (cardState[entity].lines || []).find((l) => String(l.id) === String(lineId));
+        if (!id || !line) return;
+        const quantity = Number(String(rawQty).replace(',', '.'));
+        if (!(quantity > 0)) {
+            showToast('Количество должно быть больше нуля', true);
+            renderDocumentLines(entity);
+            return;
+        }
+        try {
+            const saved = await apiRequest(apiUrl(entity, id + '/lines/' + lineId), {
+                method: 'PATCH',
+                body: JSON.stringify({ productId: line.productId, quantity: quantity }),
+            });
+            cardState[entity].lines = cardState[entity].lines.map((l) => String(l.id) === String(lineId) ? saved : l);
+            renderDocumentLines(entity);
+        } catch (err) {
+            showToast(err.message || 'Не удалось изменить количество', true);
+            renderDocumentLines(entity);
+        }
+    }
+
+    async function deleteDocumentLine(entity, lineId) {
+        const id = getDocumentId(entity);
+        if (!id) return;
+        try {
+            await apiRequest(apiUrl(entity, id + '/lines/' + lineId), { method: 'DELETE' });
+            cardState[entity].lines = (cardState[entity].lines || []).filter((l) => String(l.id) !== String(lineId));
+            renderDocumentLines(entity);
+        } catch (err) {
+            showToast(err.message || 'Не удалось удалить строку', true);
         }
     }
 
@@ -891,6 +1277,7 @@
         }
         setToolbarButtonsVisible(root, '[data-action="save"], [data-action="save-close"], [data-action="more"]', !readonly);
         setToolbarButtonsVisible(root, '[data-action="apply-password-change"]', !readonly);
+        setToolbarButtonsVisible(root, '[data-action="choose-unit"], [data-action="clear-unit"], [data-action="choose-warehouse"], [data-action="clear-warehouse"], [data-action="add-line"]', !readonly);
         root.querySelectorAll('[data-action="mark-deleted"], [data-action="unmark-deleted"], [data-action="hard-delete"]').forEach((btn) => {
             btn.classList.toggle('hidden', readonly);
             if (!readonly) btn.style.removeProperty('display');
@@ -899,6 +1286,7 @@
             if (input.closest('[data-role="change-password-panel"]')) return;
             if (!input.hasAttribute('readonly')) input.disabled = readonly;
         });
+        if (isStockDocument(entity)) updateDocumentLinesUi(entity);
         updateCardActions(entity);
     }
 
@@ -937,6 +1325,7 @@
             hardBtn.style.display = state.readonly ? 'none' : '';
         });
         root.querySelectorAll('[data-action="copy-link"]').forEach((btn) => { btn.disabled = !hasId; });
+        if (isStockDocument(entity)) updateDocumentLinesUi(entity);
     }
 
     async function populateRolesChecklist(container, selectedIds) {
@@ -986,6 +1375,7 @@
         state.deleted = false;
         state.systemDefined = false;
         if (entity === 'users') state.usernameManual = false;
+        if (isStockDocument(entity)) state.lines = [];
         if (!keepId) root.querySelector('[data-field="id"]').value = '';
         root.querySelectorAll('[data-input]').forEach((input) => {
             if (input.type === 'checkbox') input.checked = entity === 'users' && input.dataset.input === 'enabled';
@@ -1012,6 +1402,26 @@
                 setCardValue(root, 'description', item.description);
                 state.deleted = isDeleted(entity, item);
                 state.systemDefined = isSystemDefined(entity, item);
+            } else if (entity === 'warehouses') {
+                setCardValue(root, 'name', item.name);
+                setCardValue(root, 'address', item.address);
+                state.deleted = isDeleted(entity, item);
+                state.systemDefined = isSystemDefined(entity, item);
+            } else if (entity === 'products') {
+                setCardValue(root, 'name', item.name);
+                setCardValue(root, 'article', item.article);
+                setCardValue(root, 'unitId', item.unitId);
+                setCardValue(root, 'unitName', item.unitName);
+                state.deleted = isDeleted(entity, item);
+                state.systemDefined = isSystemDefined(entity, item);
+            } else if (isStockDocument(entity)) {
+                setCardValue(root, 'number', item.number);
+                setCardValue(root, 'documentDate', toDateTimeLocalValue(item.documentDate));
+                setCardValue(root, 'warehouseId', item.warehouseId);
+                setCardValue(root, 'warehouseName', item.warehouseName);
+                state.lines = item.lines || [];
+                state.deleted = isDeleted(entity, item);
+                state.systemDefined = false;
             } else if (entity === 'users') {
                 setCardValue(root, 'username', item.username);
                 setCardValue(root, 'lastName', item.lastName);
@@ -1081,6 +1491,11 @@
             if (entity === 'roles') {
                 await populatePermissionsChecklist(root.querySelector('[data-role="permissions-checklist"]'), [], false);
             }
+            if (isStockDocument(entity)) {
+                setCardValue(root, 'documentDate', toDateTimeLocalValue());
+                cardState[entity].lines = [];
+                updateDocumentLinesUi(entity);
+            }
             updateCardActions(entity);
         }
 
@@ -1109,6 +1524,30 @@
             name: getCardValue(root, 'name').trim(),
             code: getCardValue(root, 'code').trim(),
             description: getCardValue(root, 'description').trim(),
+        };
+    }
+
+    function buildWarehousePayload(root) {
+        return {
+            name: getCardValue(root, 'name').trim(),
+            address: getCardValue(root, 'address').trim(),
+        };
+    }
+
+    function buildProductPayload(root) {
+        const unitIdRaw = getCardValue(root, 'unitId');
+        return {
+            name: getCardValue(root, 'name').trim(),
+            article: getCardValue(root, 'article').trim(),
+            unitId: unitIdRaw === '' ? null : Number(unitIdRaw),
+        };
+    }
+
+    function buildStockDocumentPayload(root) {
+        const warehouseIdRaw = getCardValue(root, 'warehouseId');
+        return {
+            warehouseId: warehouseIdRaw === '' ? null : Number(warehouseIdRaw),
+            documentDate: fromDateTimeLocalValue(getCardValue(root, 'documentDate')),
         };
     }
 
@@ -1165,6 +1604,9 @@
 
         let payload;
         if (entity === 'units') payload = buildUnitPayload(root);
+        else if (entity === 'warehouses') payload = buildWarehousePayload(root);
+        else if (entity === 'products') payload = buildProductPayload(root);
+        else if (isStockDocument(entity)) payload = buildStockDocumentPayload(root);
         else if (entity === 'users') payload = buildUserPayload(root, isCreate);
         else if (entity === 'roles') payload = buildRolePayload(root);
         else return false;
@@ -1193,6 +1635,14 @@
 
             if (entity === 'users' && isCreate) {
                 cardState.users.usernameManual = false;
+            }
+            if (isStockDocument(entity)) {
+                setCardValue(root, 'number', saved.number);
+                setCardValue(root, 'documentDate', toDateTimeLocalValue(saved.documentDate));
+                setCardValue(root, 'warehouseId', saved.warehouseId);
+                setCardValue(root, 'warehouseName', saved.warehouseName);
+                if (isCreate) cardState[entity].lines = saved.lines || [];
+                updateDocumentLinesUi(entity);
             }
             const state = cardState[entity];
             state.systemDefined = isSystemDefined(entity, saved);
@@ -1334,6 +1784,39 @@
                 showToast('Ссылка скопирована', false);
             } catch (e) { showToast('Ошибка копирования', true); }
         });
+        if (entity === 'units' || entity === 'warehouses' || entity === 'products') {
+            view.querySelector('[data-action="choose"]')?.addEventListener('click', () => confirmCatalogChoice());
+            view.querySelector('[data-action="cancel-choice"]')?.addEventListener('click', () => {
+                const returnTabId = catalogChoiceContext && catalogChoiceContext.returnTabId;
+                clearCatalogChoiceMode();
+                if (returnTabId) returnFromCatalogChoice(returnTabId);
+            });
+        }
+        if (entity === 'products') {
+            view.querySelector('[data-action="apply-filters"]')?.addEventListener('click', applyProductFilters);
+            view.querySelector('[data-action="clear-filters"]')?.addEventListener('click', () => {
+                view.querySelector('[data-filter="article"]').value = '';
+                view.querySelector('[data-filter="name"]').value = '';
+                applyProductFilters();
+            });
+            view.querySelectorAll('[data-filter]').forEach((input) => {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') applyProductFilters();
+                });
+            });
+        }
+        if (isPagedEntity(entity)) {
+            view.querySelector('[data-action="page-prev"]')?.addEventListener('click', () => {
+                if ((listState[entity].page || 0) <= 0) return;
+                listState[entity].page -= 1;
+                loadEntityList(entity);
+            });
+            view.querySelector('[data-action="page-next"]')?.addEventListener('click', () => {
+                if ((listState[entity].page || 0) >= (listState[entity].totalPages || 1) - 1) return;
+                listState[entity].page += 1;
+                loadEntityList(entity);
+            });
+        }
     }
 
     function bindCardEvents(entity) {
@@ -1364,6 +1847,20 @@
             }
         }));
         root.querySelector('[data-action="apply-password-change"]')?.addEventListener('click', () => applyPasswordChange(entity));
+        root.querySelector('[data-action="choose-unit"]')?.addEventListener('click', () => openCatalogChoice('units'));
+        root.querySelector('[data-action="clear-unit"]')?.addEventListener('click', () => {
+            setCardValue(root, 'unitId', '');
+            setCardValue(root, 'unitName', '');
+        });
+        root.querySelector('[data-action="choose-warehouse"]')?.addEventListener('click', () => openCatalogChoice('warehouses', { documentEntity: entity }));
+        root.querySelector('[data-action="clear-warehouse"]')?.addEventListener('click', () => {
+            setCardValue(root, 'warehouseId', '');
+            setCardValue(root, 'warehouseName', '');
+        });
+        root.querySelector('[data-action="add-line"]')?.addEventListener('click', () => {
+            if (!getDocumentId(entity)) return showToast('Сначала запишите документ', true);
+            openCatalogChoice('products', { mode: 'add-line', documentEntity: entity });
+        });
 
         const moreBtn = root.querySelector('[data-action="more"]');
         const moreMenu = root.querySelector('[data-role="more-menu"]');
@@ -1464,6 +1961,10 @@
 
     function bindGlobalEvents() {
         document.getElementById('btn-load-units')?.addEventListener('click', () => navigateTo('units'));
+        document.getElementById('btn-load-warehouses')?.addEventListener('click', () => navigateTo('warehouses'));
+        document.getElementById('btn-load-products')?.addEventListener('click', () => navigateTo('products'));
+        document.getElementById('btn-load-income-documents')?.addEventListener('click', () => navigateTo('incomeDocuments'));
+        document.getElementById('btn-load-outcome-documents')?.addEventListener('click', () => navigateTo('outcomeDocuments'));
         document.getElementById('btn-load-admin-settings')?.addEventListener('click', () => navigateTo('adminSettings'));
         document.getElementById('btn-load-users')?.addEventListener('click', () => navigateTo('users'));
         document.getElementById('btn-load-roles')?.addEventListener('click', () => navigateTo('roles'));
@@ -1596,7 +2097,7 @@
 
         appInitialized = true;
         initSidebar();
-        ['units', 'users', 'roles', 'permissions'].forEach((e) => { bindListEvents(e); bindCardEvents(e); });
+        ['units', 'warehouses', 'products', 'incomeDocuments', 'outcomeDocuments', 'users', 'roles', 'permissions'].forEach((e) => { bindListEvents(e); bindCardEvents(e); });
         bindGlobalEvents();
         await buildPermissionIdMap();
         const route = parseHash(location.hash);

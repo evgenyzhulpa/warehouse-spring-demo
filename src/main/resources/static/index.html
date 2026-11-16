@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Учёт склада — демо</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/css/app.css?v=6">
+    <link rel="stylesheet" href="/css/app.css?v=8">
 </head>
 <body>
 <div class="login-overlay" id="login-overlay">
@@ -80,8 +80,8 @@
                         <div class="nsi-block">
                             <div class="nsi-block__header">Складские операции</div>
                             <div class="nsi-block__body">
-                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Поступление товаров (скоро)</span></div>
-                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Реализация товаров (скоро)</span></div>
+                                <button type="button" class="nsi-command" id="btn-load-income-documents"><span>▸</span><span>Поступление товаров</span></button>
+                                <button type="button" class="nsi-command" id="btn-load-outcome-documents"><span>▸</span><span>Реализация товаров</span></button>
                                 <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Списание недостач (скоро)</span></div>
                             </div>
                         </div>
@@ -103,8 +103,8 @@
                             <div class="nsi-block__header">НСИ</div>
                             <div class="nsi-block__body">
                                 <button type="button" class="nsi-command" id="btn-load-units"><span>▸</span><span>Единицы измерения</span></button>
-                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Номенклатура (скоро)</span></div>
-                                <div class="nsi-command nsi-command--placeholder"><span>▸</span><span>Склады (скоро)</span></div>
+                                <button type="button" class="nsi-command" id="btn-load-products"><span>▸</span><span>Номенклатура</span></button>
+                                <button type="button" class="nsi-command" id="btn-load-warehouses"><span>▸</span><span>Склады</span></button>
                             </div>
                         </div>
                         <div class="nsi-block" id="nsi-block-admin" data-access="admin">
@@ -135,7 +135,10 @@
                 <!-- Units list -->
                 <div id="view-units" class="view" data-entity="units">
                     <h2 class="section-title">НСИ — Единицы измерения</h2>
+                    <div class="entity-card__readonly-banner hidden" data-role="choice-banner">Выбор единицы измерения</div>
                     <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary hidden" data-action="choose">Выбрать</button>
+                        <button type="button" class="btn hidden" data-action="cancel-choice">Отмена</button>
                         <button type="button" class="btn btn--primary" data-action="create">Создать</button>
                         <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
                         <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
@@ -149,6 +152,117 @@
                             </tr></thead>
                             <tbody data-role="table-body"></tbody>
                         </table>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Warehouses list -->
+                <div id="view-warehouses" class="view" data-entity="warehouses">
+                    <h2 class="section-title">НСИ — Склады</h2>
+                    <div class="entity-card__readonly-banner hidden" data-role="choice-banner">Выбор склада</div>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary hidden" data-action="choose">Выбрать</button>
+                        <button type="button" class="btn hidden" data-action="cancel-choice">Отмена</button>
+                        <button type="button" class="btn btn--primary" data-action="create">Создать</button>
+                        <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr>
+                                <th class="col-mark"></th><th class="col-id">№</th><th>Наименование</th><th>Адрес</th>
+                            </tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Products list -->
+                <div id="view-products" class="view" data-entity="products">
+                    <h2 class="section-title">НСИ — Номенклатура</h2>
+                    <div class="entity-card__readonly-banner hidden" data-role="choice-banner">Выбор номенклатуры</div>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary hidden" data-action="choose">Выбрать</button>
+                        <button type="button" class="btn hidden" data-action="cancel-choice">Отмена</button>
+                        <button type="button" class="btn btn--primary" data-action="create">Создать</button>
+                        <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-filters" data-role="filters">
+                        <div class="form-field form-field--inline" data-field="filterArticle"><label>Артикул</label><input type="text" data-filter="article" maxlength="100" autocomplete="off"></div>
+                        <div class="form-field form-field--inline" data-field="filterName"><label>Наименование</label><input type="text" data-filter="name" maxlength="255" autocomplete="off"></div>
+                        <button type="button" class="btn btn--primary" data-action="apply-filters">Найти</button>
+                        <button type="button" class="btn" data-action="clear-filters">Сбросить</button>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr>
+                                <th class="col-mark"></th><th class="col-id">№</th><th class="col-code">Артикул</th><th>Наименование</th><th>Единица</th>
+                            </tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="entity-pager hidden" data-role="pager">
+                        <button type="button" class="btn" data-action="page-prev">Назад</button>
+                        <span class="entity-pager__info" data-role="pager-info"></span>
+                        <button type="button" class="btn" data-action="page-next">Вперёд</button>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Income documents journal -->
+                <div id="view-income-documents" class="view" data-entity="incomeDocuments">
+                    <h2 class="section-title">Склад — Поступления товаров</h2>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary" data-action="create">Создать</button>
+                        <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr>
+                                <th class="col-mark"></th><th class="col-code">Номер</th><th>Дата</th><th>Склад</th>
+                            </tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="entity-pager hidden" data-role="pager">
+                        <button type="button" class="btn" data-action="page-prev">Назад</button>
+                        <span class="entity-pager__info" data-role="pager-info"></span>
+                        <button type="button" class="btn" data-action="page-next">Вперёд</button>
+                    </div>
+                    <div class="empty-state hidden" data-role="empty">Список пуст.</div>
+                </div>
+
+                <!-- Outcome documents journal -->
+                <div id="view-outcome-documents" class="view" data-entity="outcomeDocuments">
+                    <h2 class="section-title">Склад — Реализации товаров</h2>
+                    <div class="entity-toolbar">
+                        <button type="button" class="btn btn--primary" data-action="create">Создать</button>
+                        <button type="button" class="btn" data-action="edit" disabled>Изменить</button>
+                        <button type="button" class="btn" data-action="copy-link" disabled>Копировать ссылку</button>
+                        <button type="button" class="btn" data-action="refresh">Обновить</button>
+                        <span class="entity-status" data-role="status"></span>
+                    </div>
+                    <div class="entity-table-wrap hidden" data-role="table-wrap">
+                        <table class="entity-table">
+                            <thead><tr>
+                                <th class="col-mark"></th><th class="col-code">Номер</th><th>Дата</th><th>Склад</th>
+                            </tr></thead>
+                            <tbody data-role="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="entity-pager hidden" data-role="pager">
+                        <button type="button" class="btn" data-action="page-prev">Назад</button>
+                        <span class="entity-pager__info" data-role="pager-info"></span>
+                        <button type="button" class="btn" data-action="page-next">Вперёд</button>
                     </div>
                     <div class="empty-state hidden" data-role="empty">Список пуст.</div>
                 </div>
@@ -243,6 +357,203 @@
                             <div class="form-field" data-field="code"><label>Код *</label><input type="text" data-input="code" maxlength="50" autocomplete="off"></div>
                             <div class="form-field" data-field="name"><label>Наименование *</label><input type="text" data-input="name" maxlength="255" autocomplete="off"></div>
                             <div class="form-field" data-field="description"><label>Описание</label><textarea data-input="description" autocomplete="off"></textarea></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product card -->
+                <div id="view-product-card" class="view" data-entity-card="products">
+                    <h2 class="section-title">Номенклатура</h2>
+                    <div class="entity-card" id="product-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Номенклатура</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card" title="Закрыть">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner hidden" data-role="readonly-banner">Предопределённый элемент — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--primary btn--primary-bold" data-action="save-close">Записать и закрыть</button>
+                            <button type="button" class="btn" data-action="save">Записать</button>
+                            <span class="entity-card__toolbar-spacer"></span>
+                            <button type="button" class="btn btn--icon" data-action="copy-link" title="Ссылка">🔗</button>
+                            <div class="dropdown" data-role="more-dropdown">
+                                <button type="button" class="btn" data-action="more">Ещё ▾</button>
+                                <div class="dropdown__menu" data-role="more-menu">
+                                    <button type="button" class="dropdown__item" data-action="save">Записать</button>
+                                    <button type="button" class="dropdown__item" data-action="save-close">Записать и закрыть</button>
+                                    <button type="button" class="dropdown__item" data-action="copy-link">Копировать ссылку</button>
+                                    <div class="dropdown__divider"></div>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="mark-deleted">Пометить на удаление</button>
+                                    <button type="button" class="dropdown__item" data-action="unmark-deleted">Снять пометку удаления</button>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="hard-delete">Удалить безвозвратно</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-field" data-field="article"><label>Артикул *</label><input type="text" data-input="article" maxlength="100" autocomplete="off"></div>
+                            <div class="form-field" data-field="name"><label>Наименование *</label><input type="text" data-input="name" maxlength="255" autocomplete="off"></div>
+                            <div class="form-field" data-field="unitId">
+                                <label>Базовая единица *</label>
+                                <input type="hidden" data-input="unitId">
+                                <div class="lookup-field">
+                                    <input type="text" data-input="unitName" readonly autocomplete="off" placeholder="Выберите единицу измерения">
+                                    <button type="button" class="btn" data-action="choose-unit" title="Выбрать">…</button>
+                                    <button type="button" class="btn" data-action="clear-unit" title="Очистить">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Income document card -->
+                <div id="view-income-document-card" class="view" data-entity-card="incomeDocuments">
+                    <h2 class="section-title">Поступление товаров</h2>
+                    <div class="entity-card entity-card--wide" id="income-document-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Поступление товаров</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card" title="Закрыть">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner hidden" data-role="readonly-banner">Предопределённый элемент — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--primary btn--primary-bold" data-action="save-close">Записать и закрыть</button>
+                            <button type="button" class="btn" data-action="save">Записать</button>
+                            <span class="entity-card__toolbar-spacer"></span>
+                            <button type="button" class="btn btn--icon" data-action="copy-link" title="Ссылка">🔗</button>
+                            <div class="dropdown" data-role="more-dropdown">
+                                <button type="button" class="btn" data-action="more">Ещё ▾</button>
+                                <div class="dropdown__menu" data-role="more-menu">
+                                    <button type="button" class="dropdown__item" data-action="save">Записать</button>
+                                    <button type="button" class="dropdown__item" data-action="save-close">Записать и закрыть</button>
+                                    <button type="button" class="dropdown__item" data-action="copy-link">Копировать ссылку</button>
+                                    <div class="dropdown__divider"></div>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="mark-deleted">Пометить на удаление</button>
+                                    <button type="button" class="dropdown__item" data-action="unmark-deleted">Снять пометку удаления</button>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="hard-delete">Удалить безвозвратно</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-field" data-field="number"><label>Номер</label><input type="text" data-input="number" readonly autocomplete="off" placeholder="Назначается при записи"></div>
+                            <div class="form-field" data-field="documentDate"><label>Дата *</label><input type="datetime-local" data-input="documentDate"></div>
+                            <div class="form-field" data-field="warehouseId">
+                                <label>Склад *</label>
+                                <input type="hidden" data-input="warehouseId">
+                                <div class="lookup-field">
+                                    <input type="text" data-input="warehouseName" readonly autocomplete="off" placeholder="Выберите склад">
+                                    <button type="button" class="btn" data-action="choose-warehouse" title="Выбрать">…</button>
+                                    <button type="button" class="btn" data-action="clear-warehouse" title="Очистить">×</button>
+                                </div>
+                            </div>
+                            <div class="doc-lines" data-role="lines-block">
+                                <div class="doc-lines__header">Товары</div>
+                                <div class="entity-card__readonly-banner" data-role="lines-locked">Сначала запишите документ — затем можно добавлять строки</div>
+                                <div class="doc-lines__toolbar hidden" data-role="lines-toolbar">
+                                    <button type="button" class="btn btn--primary" data-action="add-line">Добавить строку</button>
+                                </div>
+                                <div class="entity-table-wrap doc-lines__table hidden" data-role="lines-table-wrap">
+                                    <table class="entity-table">
+                                        <thead><tr>
+                                            <th class="col-id">№</th><th>Номенклатура</th><th class="col-code">Артикул</th><th>Количество</th><th class="col-mark"></th>
+                                        </tr></thead>
+                                        <tbody data-role="lines-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outcome document card -->
+                <div id="view-outcome-document-card" class="view" data-entity-card="outcomeDocuments">
+                    <h2 class="section-title">Реализация товаров</h2>
+                    <div class="entity-card entity-card--wide" id="outcome-document-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Реализация товаров</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card" title="Закрыть">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner hidden" data-role="readonly-banner">Предопределённый элемент — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--primary btn--primary-bold" data-action="save-close">Записать и закрыть</button>
+                            <button type="button" class="btn" data-action="save">Записать</button>
+                            <span class="entity-card__toolbar-spacer"></span>
+                            <button type="button" class="btn btn--icon" data-action="copy-link" title="Ссылка">🔗</button>
+                            <div class="dropdown" data-role="more-dropdown">
+                                <button type="button" class="btn" data-action="more">Ещё ▾</button>
+                                <div class="dropdown__menu" data-role="more-menu">
+                                    <button type="button" class="dropdown__item" data-action="save">Записать</button>
+                                    <button type="button" class="dropdown__item" data-action="save-close">Записать и закрыть</button>
+                                    <button type="button" class="dropdown__item" data-action="copy-link">Копировать ссылку</button>
+                                    <div class="dropdown__divider"></div>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="mark-deleted">Пометить на удаление</button>
+                                    <button type="button" class="dropdown__item" data-action="unmark-deleted">Снять пометку удаления</button>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="hard-delete">Удалить безвозвратно</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-field" data-field="number"><label>Номер</label><input type="text" data-input="number" readonly autocomplete="off" placeholder="Назначается при записи"></div>
+                            <div class="form-field" data-field="documentDate"><label>Дата *</label><input type="datetime-local" data-input="documentDate"></div>
+                            <div class="form-field" data-field="warehouseId">
+                                <label>Склад *</label>
+                                <input type="hidden" data-input="warehouseId">
+                                <div class="lookup-field">
+                                    <input type="text" data-input="warehouseName" readonly autocomplete="off" placeholder="Выберите склад">
+                                    <button type="button" class="btn" data-action="choose-warehouse" title="Выбрать">…</button>
+                                    <button type="button" class="btn" data-action="clear-warehouse" title="Очистить">×</button>
+                                </div>
+                            </div>
+                            <div class="doc-lines" data-role="lines-block">
+                                <div class="doc-lines__header">Товары</div>
+                                <div class="entity-card__readonly-banner" data-role="lines-locked">Сначала запишите документ — затем можно добавлять строки</div>
+                                <div class="doc-lines__toolbar hidden" data-role="lines-toolbar">
+                                    <button type="button" class="btn btn--primary" data-action="add-line">Добавить строку</button>
+                                </div>
+                                <div class="entity-table-wrap doc-lines__table hidden" data-role="lines-table-wrap">
+                                    <table class="entity-table">
+                                        <thead><tr>
+                                            <th class="col-id">№</th><th>Номенклатура</th><th class="col-code">Артикул</th><th>Количество</th><th class="col-mark"></th>
+                                        </tr></thead>
+                                        <tbody data-role="lines-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warehouse card -->
+                <div id="view-warehouse-card" class="view" data-entity-card="warehouses">
+                    <h2 class="section-title">Склад</h2>
+                    <div class="entity-card" id="warehouse-card-root">
+                        <div class="entity-card__header-row">
+                            <div class="entity-card__header" data-role="header">Склад</div>
+                            <button type="button" class="btn btn--icon btn--icon-close" data-action="close-card" title="Закрыть">×</button>
+                        </div>
+                        <div class="entity-card__readonly-banner hidden" data-role="readonly-banner">Предопределённый элемент — только просмотр</div>
+                        <div class="entity-card__toolbar" data-role="toolbar">
+                            <button type="button" class="btn btn--primary btn--primary-bold" data-action="save-close">Записать и закрыть</button>
+                            <button type="button" class="btn" data-action="save">Записать</button>
+                            <span class="entity-card__toolbar-spacer"></span>
+                            <button type="button" class="btn btn--icon" data-action="copy-link" title="Ссылка">🔗</button>
+                            <div class="dropdown" data-role="more-dropdown">
+                                <button type="button" class="btn" data-action="more">Ещё ▾</button>
+                                <div class="dropdown__menu" data-role="more-menu">
+                                    <button type="button" class="dropdown__item" data-action="save">Записать</button>
+                                    <button type="button" class="dropdown__item" data-action="save-close">Записать и закрыть</button>
+                                    <button type="button" class="dropdown__item" data-action="copy-link">Копировать ссылку</button>
+                                    <div class="dropdown__divider"></div>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="mark-deleted">Пометить на удаление</button>
+                                    <button type="button" class="dropdown__item" data-action="unmark-deleted">Снять пометку удаления</button>
+                                    <button type="button" class="dropdown__item dropdown__item--danger" data-action="hard-delete">Удалить безвозвратно</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="entity-card__body" data-role="body">
+                            <input type="hidden" data-field="id">
+                            <div class="form-field" data-field="name"><label>Наименование *</label><input type="text" data-input="name" maxlength="255" autocomplete="off"></div>
+                            <div class="form-field" data-field="address"><label>Адрес</label><textarea data-input="address" autocomplete="off"></textarea></div>
                         </div>
                     </div>
                 </div>
@@ -415,6 +726,6 @@
         </main>
     </div>
 </div>
-    <script src="/js/app.js?v=15"></script>
+    <script src="/js/app.js?v=20"></script>
 </body>
 </html>

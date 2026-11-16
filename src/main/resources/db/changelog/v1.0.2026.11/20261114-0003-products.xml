@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261114-0003" author="EvgenyZhulpa">
+        <comment>Creating the table products with basic fields (BaseEntity, SystemEntity) and unit FK</comment>
+        <createTable tableName="products">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="system_defined" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="article" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="unit_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="products" indexName="idx_products_deleted">
+            <column name="deleted"/>
+        </createIndex>
+
+        <addForeignKeyConstraint
+                baseTableName="products"
+                baseColumnNames="unit_id"
+                referencedTableName="units"
+                referencedColumnNames="id"
+                constraintName="fk_products_unit"
+                onDelete="RESTRICT"
+                onUpdate="RESTRICT"/>
+
+        <insert tableName="products">
+            <column name="name" value="Товар"/>
+            <column name="article" value="ART-001"/>
+            <column name="unit_id" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="20261114-0004" author="EvgenyZhulpa">
+        <comment>Product catalog permissions</comment>
+        <insert tableName="permissions">
+            <column name="code" value="PRODUCTS_READ"/>
+            <column name="name" value="Просмотр (чтение) номенклатуры"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+        <insert tableName="permissions">
+            <column name="code" value="PRODUCTS_WRITE"/>
+            <column name="name" value="Добавление и изменение номенклатуры"/>
+            <column name="system_defined" value="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
